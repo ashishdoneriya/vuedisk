@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<title>File Manager</title>
+	<meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport" />
+	<meta content="yes" name="apple-mobile-web-app-capable" />
+	<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+	<meta content="telephone=no" name="format-detection" />
+	<link rel="icon" type="image/png" href="/icons/favico.png" />
+	<link rel="stylesheet" href="/css/theme/index.css">
+	<link rel="stylesheet" href="/fonts/Roboto/roboto.css">
+	<link rel="stylesheet" href="/css/index.css">
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<script src="/js/vue.min.js"></script>
+	<script src="/js/vue-router.min.js"></script>
+	<script src="/js/httpVueLoader.js"></script>
+	<script src="/js/elementui.min.js"></script>
+	<script src="/js/element.en.js"></script>
+	<script src="/js/axios.min.js"></script>
+	<script src="/js/cookies.min.js"></script>
+</head>
+
+<body>
+	<div id="vapp">
+		<el-container class="container">
+			<el-header class="text-center">
+				<h1>File Manager</h1>
+			</el-header>
+			<el-main>
+				<el-row type="flex" class="row-bg" justify="space-between">
+					<el-col>
+						<el-button type="primary">Add Files</el-button>
+					</el-col>
+					<el-col>
+						<el-form :inline="true" style="text-align: right">
+							<el-form-item>
+								<el-input v-model="folderName"></el-input>
+							</el-form-item>
+							<el-form-item>
+								<el-button type="primary">New Folder</el-button>
+							</el-form-item>
+						</el-form>
+					</el-col>
+				</el-row>
+				<el-row style="margin-bottom:15px">
+					<el-col :span="24">
+						<el-breadcrumb separator-class="el-icon-arrow-right">
+							<el-breadcrumb-item>Home</el-breadcrumb-item>
+							<el-breadcrumb-item v-for="dir in stack">{{dir}}</el-breadcrumb-item>
+						</el-breadcrumb>
+					</el-col>
+				</el-row>
+				<el-row type="flex" class="row-bg" justify="center">
+					<el-col :span="24">
+						<el-card>
+							<el-table ref="multipleTable" :data="tableData" style="width: 100%" @selection-change="handleSelectionChange" size="medium">
+								<el-table-column type="selection" width="55">
+								</el-table-column>
+								<el-table-column label="Name">
+									<template slot-scope="scope">
+										<span v-if="scope.row.isDir" style="font-weight: bold;cursor: pointer" @click="openDir(scope.row.path)">{{ scope.row.name }}</span>
+										<span v-if="!scope.row.isDir" style="cursor: pointer;" @click="download(scope.row)">{{ scope.row.name }}</span>
+									</template>
+								</el-table-column>
+								<el-table-column label="Operations" align="right" >
+									<template slot-scope="scope">
+										<span v-if="!scope.row.isDir" style="margin-right: 10px">{{ scope.row.size }}</span>
+										<el-button type="text" size="small">Rename</el-button>
+									</template>
+								</el-table-column>
+							</el-table>
+							<div style="margin-top: 20px">
+								<el-button>Copy</el-button>
+								<el-button>Move</el-button>
+								<el-button>Zip</el-button>
+								<el-button>Delete</el-button>
+							</div>
+						</el-card>
+					</el-col>
+				</el-row>
+			</el-main>
+		</el-container>
+	</div>
+	<script>
+	ELEMENT.locale(ELEMENT.lang.en);
+	new Vue({
+		el: '#vapp',
+		data: {
+			folderName: '',
+			stack: [],
+			tableData: [],
+			multipleSelection: [],
+			baseDir: '',
+			currentDir: ''
+		},
+		computed: {
+			stack() {
+				return currentDir.substring(baseDir.length).split('/');
+			}
+		},
+		created() {
+			axios.get('/api/base-dir.php')
+				.then((response) => {
+					this.baseDir = response.data;
+					this.openDir(this.baseDir);
+				});
+		},
+		methods: {
+			addFolder() {
+
+			},
+			handleSelectionChange(val) {
+				this.multipleSelection = val;
+			},
+			openDir(path) {
+				axios.get('/api/files-list.php?path=' + path)
+					.then((response) => {
+						this.currentDir = path;
+						this.tableData = response.data;
+					});
+			},
+			download(file) {
+				document.location = `/api/download.php?path=${file.path}`;
+				// axios({
+				// 	url: `/api/download.php?path=${file.path}`,
+				// 	method: 'GET',
+				// 	responseType: 'blob',
+				// 	data : {
+				// 		path : file.path
+				// 	}
+				// }).then((response) => {
+				// 	const url = window.URL.createObjectURL(new Blob([response.data]));
+				// 	const link = document.createElement('a');
+				// 	link.href = url;
+				// 	link.setAttribute('download', file.name);
+				// 	document.body.appendChild(link);
+				// 	link.click();
+				// 	document.body.removeChild(link);
+				// });
+			}
+		}
+	});
+	</script>
+</body>
+
+</html>

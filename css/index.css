@@ -1,0 +1,40 @@
+* {
+	font-family: 'Roboto', sans-serif;
+}
+
+a {
+	text-decoration: none;
+	color: #009688;
+}
+
+.text-center {
+	text-align: center;
+}
+
+.right-align {
+	text-align: right;
+}
+
+h1 {
+	font-family: 'Roboto';
+	font-weight: bold;
+}
+
+a,
+i {
+	cursor: pointer;
+}
+body {
+	width: 100%;
+	background: #232323;
+}
+#vapp {
+	margin: 0 auto;
+	width: 100%;
+}
+.container {
+	margin: 30px auto;
+	width: 900px;
+	border-radius: 5px;
+	background: #fff;
+}
