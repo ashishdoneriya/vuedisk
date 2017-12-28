@@ -24,17 +24,25 @@ a,
 i {
 	cursor: pointer;
 }
+
 body {
 	width: 100%;
 	background: #232323;
 }
+
 #vapp {
 	margin: 0 auto;
 	width: 100%;
 }
+
 .container {
 	margin: 30px auto;
 	width: 900px;
 	border-radius: 5px;
 	background: #fff;
+}
+
+.fonts {
+	color: #333;
+	cursor: pointer;
 }

@@ -20,7 +20,6 @@
 	<script src="/js/elementui.min.js"></script>
 	<script src="/js/element.en.js"></script>
 	<script src="/js/axios.min.js"></script>
-	<script src="/js/cookies.min.js"></script>
 </head>
 
 <body>
@@ -45,39 +44,45 @@
 						</el-form>
 					</el-col>
 				</el-row>
-				<el-row style="margin-bottom:15px">
+				<el-row style="margin-bottom:25px">
 					<el-col :span="24">
 						<el-breadcrumb separator-class="el-icon-arrow-right">
-							<el-breadcrumb-item>Home</el-breadcrumb-item>
-							<el-breadcrumb-item v-for="dir in stack">{{dir}}</el-breadcrumb-item>
+							<el-breadcrumb-item><a @click="openDir(baseDir)">Home</a></el-breadcrumb-item>
+							<el-breadcrumb-item v-for="(dir, index) in stack"><a @click="openStack(index)">{{dir}}</a></el-breadcrumb-item>
 						</el-breadcrumb>
 					</el-col>
 				</el-row>
 				<el-row type="flex" class="row-bg" justify="center">
 					<el-col :span="24">
 						<el-card>
-							<el-table ref="multipleTable" :data="tableData" style="width: 100%" @selection-change="handleSelectionChange" size="medium">
+							<el-table ref="multipleTable" :data="tableDataFinal" style="width: 100%" @selection-change="handleSelectionChange" size="medium">
 								<el-table-column type="selection" width="55">
 								</el-table-column>
 								<el-table-column label="Name">
 									<template slot-scope="scope">
-										<span v-if="scope.row.isDir" style="font-weight: bold;cursor: pointer" @click="openDir(scope.row.path)">{{ scope.row.name }}</span>
-										<span v-if="!scope.row.isDir" style="cursor: pointer;" @click="download(scope.row)">{{ scope.row.name }}</span>
+										<span v-if="scope.row.isDir" class="fonts" style="font-weight: bold;" @click="openDir(scope.row.path)">{{ scope.row.name }}</span>
+										<span v-if="!scope.row.isDir" class="fonts" @click="download(scope.row)">{{ scope.row.name }}</span>
 									</template>
 								</el-table-column>
-								<el-table-column label="Operations" align="right" >
+								<el-table-column label="Operations" align="right">
 									<template slot-scope="scope">
 										<span v-if="!scope.row.isDir" style="margin-right: 10px">{{ scope.row.size }}</span>
+										<span v-if="scope.row.isDir" style="margin-right: 10px">Directory</span>
 										<el-button type="text" size="small">Rename</el-button>
 									</template>
 								</el-table-column>
 							</el-table>
-							<div style="margin-top: 20px">
-								<el-button>Copy</el-button>
-								<el-button>Move</el-button>
-								<el-button>Zip</el-button>
-								<el-button>Delete</el-button>
-							</div>
+							<el-row type="flex" align="middle" class="row-bg" justify="space-between" style="margin-top: 20px">
+								<el-col>
+									<el-button>Copy</el-button>
+									<el-button>Move</el-button>
+									<el-button>Zip</el-button>
+									<el-button>Delete</el-button>
+								</el-col>
+								<el-col style="text-align:right">
+									<el-checkbox v-model="hiddenFiles">Show Hidden Files</el-checkbox>
+								</el-col>
+							</el-row>
 						</el-card>
 					</el-col>
 				</el-row>
@@ -85,64 +90,88 @@
 		</el-container>
 	</div>
 	<script>
-	ELEMENT.locale(ELEMENT.lang.en);
-	new Vue({
-		el: '#vapp',
-		data: {
-			folderName: '',
-			stack: [],
-			tableData: [],
-			multipleSelection: [],
-			baseDir: '',
-			currentDir: ''
-		},
-		computed: {
-			stack() {
-				return currentDir.substring(baseDir.length).split('/');
-			}
-		},
-		created() {
-			axios.get('/api/base-dir.php')
-				.then((response) => {
-					this.baseDir = response.data;
-					this.openDir(this.baseDir);
-				});
-		},
-		methods: {
-			addFolder() {
+		ELEMENT.locale(ELEMENT.lang.en);
+		new Vue({
+			el: '#vapp',
+			data: {
+				folderName: '',
+				tableData: [],
+				multipleSelection: [],
+				baseDir: '',
+				currentDir: '',
+				hiddenFiles: false
+			},
+			computed: {
+				stack() {
+					if (this.currentDir && this.baseDir) {
+						var substring = this.currentDir.substring(this.baseDir.length);
+						if (substring.startsWith('/')) {
+							substring = substring.substring(1);
+						}
+						return substring.split('/');
+					}
+					return [];
+				},
+				tableDataFinal() {
+					var arrDir = [];
+					for (var temp of this.tableData) {
+						if (temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
+							arrDir.push(temp);
+						}
+					}
 
+					var arrFile = [];
+					for (var temp of this.tableData) {
+						if (!temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
+							arrFile.push(temp);
+						}
+					}
+
+					arrDir.sort((o1, o2) => {
+						return o1.name.localeCompare(o2.name);
+					});
+					arrFile.sort((o1, o2) => {
+						return o1.name.localeCompare(o2.name);
+					});
+					return arrDir.concat(arrFile);
+				}
 			},
-			handleSelectionChange(val) {
-				this.multipleSelection = val;
-			},
-			openDir(path) {
-				axios.get('/api/files-list.php?path=' + path)
+			created() {
+				axios.get('/api/base-dir.php')
 					.then((response) => {
-						this.currentDir = path;
-						this.tableData = response.data;
+						this.baseDir = response.data;
+						this.openDir(this.baseDir);
 					});
 			},
-			download(file) {
-				document.location = `/api/download.php?path=${file.path}`;
-				// axios({
-				// 	url: `/api/download.php?path=${file.path}`,
-				// 	method: 'GET',
-				// 	responseType: 'blob',
-				// 	data : {
-				// 		path : file.path
-				// 	}
-				// }).then((response) => {
-				// 	const url = window.URL.createObjectURL(new Blob([response.data]));
-				// 	const link = document.createElement('a');
-				// 	link.href = url;
-				// 	link.setAttribute('download', file.name);
-				// 	document.body.appendChild(link);
-				// 	link.click();
-				// 	document.body.removeChild(link);
-				// });
+			methods: {
+				openStack(index) {
+					var path = this.baseDir;
+					if (path.endsWith('/')) {
+						path = path.substring(0, path.length - 1);
+					}
+					for (var i = 0; i <= index; i++) {
+						path = path + "/" + this.stack[i];
+					}
+					this.openDir(path);
+				},
+				addFolder() {
+
+				},
+				handleSelectionChange(val) {
+					this.multipleSelection = val;
+				},
+				openDir(path) {
+					axios.get('/api/files-list.php?path=' + path)
+						.then((response) => {
+							this.currentDir = path;
+							this.tableData = response.data;
+						});
+				},
+				download(file) {
+					document.location = `/api/download.php?path=${file.path}`;
+				}
 			}
-		}
-	});
+		});
 	</script>
 </body>
 
