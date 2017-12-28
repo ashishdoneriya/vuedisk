@@ -31,15 +31,17 @@
 			<el-main>
 				<el-row type="flex" class="row-bg" justify="space-between">
 					<el-col>
-						<el-button type="primary">Add Files</el-button>
+						<el-upload :action="'/api/upload.php?dir=' + currentDir" multiple>
+							<el-button size="small" type="primary">Add Files</el-button>
+						</el-upload>
 					</el-col>
 					<el-col>
 						<el-form :inline="true" style="text-align: right">
 							<el-form-item>
-								<el-input v-model="folderName"></el-input>
+								<el-input v-model="dirToAdd"></el-input>
 							</el-form-item>
 							<el-form-item>
-								<el-button type="primary">New Folder</el-button>
+								<el-button type="primary" @click="addDirectory()">New Folder</el-button>
 							</el-form-item>
 						</el-form>
 					</el-col>
@@ -90,88 +92,95 @@
 		</el-container>
 	</div>
 	<script>
-		ELEMENT.locale(ELEMENT.lang.en);
-		new Vue({
-			el: '#vapp',
-			data: {
-				folderName: '',
-				tableData: [],
-				multipleSelection: [],
-				baseDir: '',
-				currentDir: '',
-				hiddenFiles: false
-			},
-			computed: {
-				stack() {
-					if (this.currentDir && this.baseDir) {
-						var substring = this.currentDir.substring(this.baseDir.length);
-						if (substring.startsWith('/')) {
-							substring = substring.substring(1);
-						}
-						return substring.split('/');
+	ELEMENT.locale(ELEMENT.lang.en);
+	new Vue({
+		el: '#vapp',
+		data: {
+			folderName: '',
+			tableData: [],
+			multipleSelection: [],
+			baseDir: '',
+			currentDir: '',
+			hiddenFiles: false,
+			dirToAdd: ''
+		},
+		computed: {
+			stack() {
+				if (this.currentDir && this.baseDir) {
+					var substring = this.currentDir.substring(this.baseDir.length);
+					if (substring.startsWith('/')) {
+						substring = substring.substring(1);
 					}
-					return [];
-				},
-				tableDataFinal() {
-					var arrDir = [];
-					for (var temp of this.tableData) {
-						if (temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
-							arrDir.push(temp);
-						}
-					}
-
-					var arrFile = [];
-					for (var temp of this.tableData) {
-						if (!temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
-							arrFile.push(temp);
-						}
-					}
-
-					arrDir.sort((o1, o2) => {
-						return o1.name.localeCompare(o2.name);
-					});
-					arrFile.sort((o1, o2) => {
-						return o1.name.localeCompare(o2.name);
-					});
-					return arrDir.concat(arrFile);
+					return substring.split('/');
 				}
+				return [];
 			},
-			created() {
-				axios.get('/api/base-dir.php')
-					.then((response) => {
-						this.baseDir = response.data;
-						this.openDir(this.baseDir);
-					});
-			},
-			methods: {
-				openStack(index) {
-					var path = this.baseDir;
-					if (path.endsWith('/')) {
-						path = path.substring(0, path.length - 1);
+			tableDataFinal() {
+				var arrDir = [];
+				for (var temp of this.tableData) {
+					if (temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
+						arrDir.push(temp);
 					}
-					for (var i = 0; i <= index; i++) {
-						path = path + "/" + this.stack[i];
-					}
-					this.openDir(path);
-				},
-				addFolder() {
-
-				},
-				handleSelectionChange(val) {
-					this.multipleSelection = val;
-				},
-				openDir(path) {
-					axios.get('/api/files-list.php?path=' + path)
-						.then((response) => {
-							this.currentDir = path;
-							this.tableData = response.data;
-						});
-				},
-				download(file) {
-					document.location = `/api/download.php?path=${file.path}`;
 				}
+
+				var arrFile = [];
+				for (var temp of this.tableData) {
+					if (!temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
+						arrFile.push(temp);
+					}
+				}
+
+				arrDir.sort((o1, o2) => {
+					return o1.name.localeCompare(o2.name);
+				});
+				arrFile.sort((o1, o2) => {
+					return o1.name.localeCompare(o2.name);
+				});
+				return arrDir.concat(arrFile);
 			}
-		});
+		},
+		created() {
+			axios.get('/api/base-dir.php')
+				.then((response) => {
+					this.baseDir = response.data;
+					this.openDir(this.baseDir);
+				});
+		},
+		methods: {
+			openStack(index) {
+				var path = this.baseDir;
+				if (path.endsWith('/')) {
+					path = path.substring(0, path.length - 1);
+				}
+				for (var i = 0; i <= index; i++) {
+					path = path + "/" + this.stack[i];
+				}
+				this.openDir(path);
+			},
+			addDirectory() {
+				axios.post('/api/dir-add.php', {
+						'dirname' : this.dirToAdd,
+						'parentPath' : this.currentDir
+					})
+					.then((response) => {
+						this.openDir(this.currentDir);
+					});
+			},
+			handleSelectionChange(val) {
+				this.multipleSelection = val;
+			},
+			openDir(path) {
+				axios.get('/api/files-list.php?path=' + path)
+					.then((response) => {
+						this.currentDir = path;
+						this.tableData = response.data;
+					});
+			},
+			download(file) {
+				document.location = `/api/download.php?path=${file.path}`;
+			}
+		}
+	});
 	</script>
 </body>
 

@@ -1,3 +1,3 @@
 <?php
-	echo '/home/impadmin';
+	echo '/home/ashish';
 ?>

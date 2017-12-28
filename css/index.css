@@ -37,12 +37,16 @@ body {
 
 .container {
 	margin: 30px auto;
-	width: 900px;
-	border-radius: 5px;
+	max-width: 900px;
+	border-radius: 1px;
 	background: #fff;
 }
 
 .fonts {
 	color: #333;
 	cursor: pointer;
+}
+
+.el-card {
+	border-color : #bbb;
 }
