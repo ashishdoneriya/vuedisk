@@ -92,95 +92,98 @@
 		</el-container>
 	</div>
 	<script>
-	ELEMENT.locale(ELEMENT.lang.en);
-	new Vue({
-		el: '#vapp',
-		data: {
-			folderName: '',
-			tableData: [],
-			multipleSelection: [],
-			baseDir: '',
-			currentDir: '',
-			hiddenFiles: false,
-			dirToAdd: ''
-		},
-		computed: {
-			stack() {
-				if (this.currentDir && this.baseDir) {
-					var substring = this.currentDir.substring(this.baseDir.length);
-					if (substring.startsWith('/')) {
-						substring = substring.substring(1);
-					}
-					return substring.split('/');
-				}
-				return [];
+		ELEMENT.locale(ELEMENT.lang.en);
+		new Vue({
+			el: '#vapp',
+			data: {
+				folderName: '',
+				tableData: [],
+				multipleSelection: [],
+				baseDir: '',
+				currentDir: '',
+				hiddenFiles: false,
+				dirToAdd: ''
 			},
-			tableDataFinal() {
-				var arrDir = [];
-				for (var temp of this.tableData) {
-					if (temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
-						arrDir.push(temp);
+			computed: {
+				stack() {
+					if (this.currentDir && this.baseDir) {
+						var substring = this.currentDir.substring(this.baseDir.length);
+						if (substring.startsWith('/')) {
+							substring = substring.substring(1);
+						}
+						return substring.split('/');
 					}
-				}
-
-				var arrFile = [];
-				for (var temp of this.tableData) {
-					if (!temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
-						arrFile.push(temp);
+					return [];
+				},
+				tableDataFinal() {
+					var arrDir = [];
+					for (var temp of this.tableData) {
+						if (temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
+							arrDir.push(temp);
+						}
 					}
-				}
 
-				arrDir.sort((o1, o2) => {
-					return o1.name.localeCompare(o2.name);
-				});
-				arrFile.sort((o1, o2) => {
-					return o1.name.localeCompare(o2.name);
-				});
-				return arrDir.concat(arrFile);
-			}
-		},
-		created() {
-			axios.get('/api/base-dir.php')
-				.then((response) => {
-					this.baseDir = response.data;
-					this.openDir(this.baseDir);
-				});
-		},
-		methods: {
-			openStack(index) {
-				var path = this.baseDir;
-				if (path.endsWith('/')) {
-					path = path.substring(0, path.length - 1);
+					var arrFile = [];
+					for (var temp of this.tableData) {
+						if (!temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
+							arrFile.push(temp);
+						}
+					}
+
+					arrDir.sort((o1, o2) => {
+						return o1.name.localeCompare(o2.name);
+					});
+					arrFile.sort((o1, o2) => {
+						return o1.name.localeCompare(o2.name);
+					});
+					return arrDir.concat(arrFile);
 				}
-				for (var i = 0; i <= index; i++) {
-					path = path + "/" + this.stack[i];
-				}
-				this.openDir(path);
 			},
-			addDirectory() {
-				axios.post('/api/dir-add.php', {
-						'dirname' : this.dirToAdd,
-						'parentPath' : this.currentDir
-					})
+			created() {
+				axios.get('/api/base-dir.php')
 					.then((response) => {
-						this.openDir(this.currentDir);
+						this.baseDir = response.data;
+						this.openDir(this.baseDir);
 					});
 			},
-			handleSelectionChange(val) {
-				this.multipleSelection = val;
-			},
-			openDir(path) {
-				axios.get('/api/files-list.php?path=' + path)
-					.then((response) => {
-						this.currentDir = path;
-						this.tableData = response.data;
-					});
-			},
-			download(file) {
-				document.location = `/api/download.php?path=${file.path}`;
+			methods: {
+				openStack(index) {
+					var path = this.baseDir;
+					if (path.endsWith('/')) {
+						path = path.substring(0, path.length - 1);
+					}
+					for (var i = 0; i <= index; i++) {
+						path = path + "/" + this.stack[i];
+					}
+					this.openDir(path);
+				},
+				addDirectory() {
+					if (this.dirToAdd) {
+						axios.post('/api/dir-add.php', {
+								'dirname': this.dirToAdd,
+								'parentPath': this.currentDir
+							})
+							.then((response) => {
+								this.dirToAdd = '';
+								this.openDir(this.currentDir);
+							});
+					}
+				},
+				handleSelectionChange(val) {
+					this.multipleSelection = val;
+				},
+				openDir(path) {
+					axios.get('/api/files-list.php?path=' + path)
+						.then((response) => {
+							this.currentDir = path;
+							this.tableData = response.data;
+						});
+				},
+				download(file) {
+					document.location = `/api/download.php?path=${file.path}`;
+				}
 			}
-		}
-	});
+		});
 	</script>
 </body>
 
