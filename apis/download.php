@@ -1,4 +1,7 @@
 <?php
+
+include_once './base-dir.php';
+
     header("Pragma: public"); // required
     header("Expires: 0");
     header("Cache-Control: must-revalidate, post-check=0, pre-check=0");

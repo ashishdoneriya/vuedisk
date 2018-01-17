@@ -31,7 +31,7 @@
 			<el-main>
 				<el-row type="flex" class="row-bg" justify="space-between">
 					<el-col>
-						<el-upload :action="'/api/upload.php?dir=' + currentDir" multiple style="float:left;margin-right: 10px">
+						<el-upload :action="'/apis/upload.php?dir=' + currentDir" multiple style="float:left;margin-right: 10px">
 							<el-button size="small" type="primary">Add Files</el-button>
 						</el-upload>
 						<el-button type="primary" @click="openRemoteUploadDialog()" size="small">Remote Upload</el-button>
@@ -51,7 +51,7 @@
 				<el-row style="margin-bottom:25px" type="flex">
 					<el-col :span="24">
 						<el-breadcrumb separator-class="el-icon-arrow-right">
-							<el-breadcrumb-item><a @click="openDir(baseDir)">Home</a></el-breadcrumb-item>
+							<el-breadcrumb-item><a @click="openDir('/')">Home</a></el-breadcrumb-item>
 							<el-breadcrumb-item v-for="(dir, index) in stack"><a @click="openStack(index)">{{dir}}</a></el-breadcrumb-item>
 						</el-breadcrumb>
 					</el-col>
@@ -64,8 +64,11 @@
 								</el-table-column>
 								<el-table-column label="Name">
 									<template slot-scope="scope">
-										<span v-if="scope.row.isDir" class="fonts" style="font-weight: bold;" @click="openDir(scope.row.path)">{{ scope.row.name }}</span>
+
+										<span v-if="scope.row.isDir" class="fonts" style="font-weight: bold;" @click="openDir(currentDir + '/' + scope.row.name)">{{ scope.row.name }}</span>
+
 										<span v-if="!scope.row.isDir" class="fonts" @click="download(scope.row)">{{ scope.row.name }}</span>
+
 									</template>
 								</el-table-column>
 								<el-table-column label="Operations" align="right">
@@ -108,123 +111,119 @@
 		</el-dialog>
 	</div>
 	<script>
-	ELEMENT.locale(ELEMENT.lang.en);
-	new Vue({
-		el: '#vapp',
-		data: {
-			folderName: '',
-			tableData: [],
-			multipleSelection: [],
-			baseDir: '',
-			currentDir: '',
-			hiddenFiles: false,
-			dirToAdd: '',
-			remoteUploadDialog : false,
-			remoteUrl : '',
-			remoteUrlName : ''
-		},
-		computed: {
-			stack() {
-				if (this.currentDir && this.baseDir) {
-					var substring = this.currentDir.substring(this.baseDir.length);
-					if (substring.startsWith('/')) {
+		ELEMENT.locale(ELEMENT.lang.en);
+		new Vue({
+			el: '#vapp',
+			data: {
+				folderName: '',
+				tableData: [],
+				multipleSelection: [],
+				currentDir: '/',
+				hiddenFiles: false,
+				dirToAdd: '',
+				remoteUploadDialog: false,
+				remoteUrl: '',
+				remoteUrlName: ''
+			},
+			computed: {
+				stack() {
+					if (this.currentDir) {
+						var substring = this.currentDir;
+						if (this.currentDir == '/') {
+							return [];
+						}
 						substring = substring.substring(1);
+						return substring.split('/');
 					}
-					return substring.split('/');
-				}
-				return [];
-			},
-			tableDataFinal() {
-				var arrDir = [];
-				for (var temp of this.tableData) {
-					if (temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
-						arrDir.push(temp);
+					return [];
+				},
+				tableDataFinal() {
+					var arrDir = [];
+					for (var temp of this.tableData) {
+						if (temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
+							arrDir.push(temp);
+						}
 					}
-				}
 
-				var arrFile = [];
-				for (var temp of this.tableData) {
-					if (!temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
-						arrFile.push(temp);
+					var arrFile = [];
+					for (var temp of this.tableData) {
+						if (!temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
+							arrFile.push(temp);
+						}
 					}
-				}
 
-				arrDir.sort((o1, o2) => {
-					return o1.name.localeCompare(o2.name);
-				});
-				arrFile.sort((o1, o2) => {
-					return o1.name.localeCompare(o2.name);
-				});
-				return arrDir.concat(arrFile);
-			}
-		},
-		created() {
-			axios.get('/api/base-dir.php')
-				.then((response) => {
-					this.baseDir = response.data;
-					this.openDir(this.baseDir);
-				});
-		},
-		methods: {
-			openRemoteUploadDialog() {
-				this.remoteUrl = '';
-				this.remoteUrlName = '';
-				this.remoteUploadDialog = true;
-			},
-			remoteUpload() {
-				this.remoteUploadDialog = false;
-				axios.post('/api/remote-upload.php', {
-					'currentDir': this.currentDir,
-					'url': this.remoteUrl,
-					'filename': this.remoteUrlName
-				}).then((response) => {
-					this.$message({
-						message: response.data
+					arrDir.sort((o1, o2) => {
+						return o1.name.localeCompare(o2.name);
 					});
-					this.openDir(this.currentDir);
-				});
-				this.$message({
-					type: 'success',
-					message: 'Your file will soon be downloaded'
-				});
-			},
-			openStack(index) {
-				var path = this.baseDir;
-				if (path.endsWith('/')) {
-					path = path.substring(0, path.length - 1);
+					arrFile.sort((o1, o2) => {
+						return o1.name.localeCompare(o2.name);
+					});
+					return arrDir.concat(arrFile);
 				}
-				for (var i = 0; i <= index; i++) {
-					path = path + "/" + this.stack[i];
-				}
-				this.openDir(path);
 			},
-			addDirectory() {
-				if (this.dirToAdd) {
-					axios.post('/api/dir-add.php', {
-							'dirname': this.dirToAdd,
-							'parentPath': this.currentDir
-						})
-						.then((response) => {
-							this.dirToAdd = '';
-							this.openDir(this.currentDir);
+			created() {
+				this.openDir("/");
+			},
+			methods: {
+				openRemoteUploadDialog() {
+					this.remoteUrl = '';
+					this.remoteUrlName = '';
+					this.remoteUploadDialog = true;
+				},
+				remoteUpload() {
+					this.remoteUploadDialog = false;
+					axios.post('/apis/remote-upload.php', {
+						'currentDir': this.currentDir,
+						'url': this.remoteUrl,
+						'filename': this.remoteUrlName
+					}).then((response) => {
+						this.$message({
+							message: response.data
 						});
-				}
-			},
-			handleSelectionChange(val) {
-				this.multipleSelection = val;
-			},
-			openDir(path) {
-				axios.get('/api/files-list.php?path=' + path)
-					.then((response) => {
-						this.currentDir = path;
-						this.tableData = response.data;
+						this.openDir(this.currentDir);
 					});
-			},
-			download(file) {
-				document.location = `/api/download.php?path=${file.path}`;
+					this.$message({
+						type: 'success',
+						message: 'Your file will soon be downloaded'
+					});
+				},
+				openStack(index) {
+					var path = '';
+					for (var i = 0; i <= index; i++) {
+						path = path + '/' + this.stack[i];
+					}
+					this.openDir(path);
+				},
+				addDirectory() {
+					if (this.dirToAdd) {
+						axios.post('/apis/dir-add.php', {
+								'dirname': this.dirToAdd,
+								'parentPath': this.currentDir
+							})
+							.then((response) => {
+								this.dirToAdd = '';
+								this.openDir(this.currentDir);
+							});
+					}
+				},
+				handleSelectionChange(val) {
+					this.multipleSelection = val;
+				},
+				openDir(path) {
+					if (path.startsWith('//')) {
+						path = path.substring(1);
+					}
+					axios.get('/apis/files-list.php?path=' + path)
+						.then((response) => {
+							this.currentDir = path;
+							this.tableData = response.data;
+						});
+				},
+				download(file) {
+					document.location = `/apis/download.php?path=${file.path}`;
+				}
 			}
-		}
-	});
+		});
 	</script>
 </body>
 
