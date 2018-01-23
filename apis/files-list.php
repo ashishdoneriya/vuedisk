@@ -1,14 +1,21 @@
 <?php
 include_once './base-dir.php';
 
-$path =  $baseDir .htmlspecialchars(strip_tags($_GET['path']));
+$path =  htmlspecialchars(strip_tags($_GET['path']));
+if (strpos($path, '/') != 0) {
+	$path =  '/' . $path;
+}
+$path = $baseDir . $path;
+
 if (strpos($path, '/./') != false || strpos($path, '/../') != false) {
+	echo "error";
 	return;
 }
+
 $list = array();
 if ($handle = opendir($path)) {
 	while (false !== ($entry = readdir($handle))) {
-		$filepath = $path . $entry;
+		$filepath = $path . '/' . $entry;
 		if (is_dir($filepath) && $entry != '.' && $entry != '..') {
 			array_push($list, array('name' => $entry , 'isDir' => true));
 		}
@@ -17,7 +24,7 @@ if ($handle = opendir($path)) {
 }
 if ($handle = opendir($path)) {
 	while (false !== ($entry = readdir($handle))) {
-		$filepath = $path. '/'. $entry;
+		$filepath = $path . '/'. $entry;
 		if (!is_dir($filepath)) {
 			array_push($list, array('name' => $entry , 'isDir' => false, 'size' => getSize($filepath)));
 		}

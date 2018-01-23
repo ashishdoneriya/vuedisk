@@ -2,12 +2,16 @@
 
 include_once './base-dir.php';
 
-    header("Pragma: public"); // required
+		$path = $_GET['path'];
+		if (strpos($path, '/') != 0) {
+			$path =  '/' . $path;
+		}
+		$path = $baseDir . $path;
+		$basename = basename($path);
+		header("Pragma: public"); // required
     header("Expires: 0");
     header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
-    $path = $_GET['path'];
-    $basename = basename($path);
-    header('Content-Disposition: attachment; filename="' . $basename . '"');
+		header('Content-Disposition: attachment; filename="' . $basename . '"');
     header("Content-Length: ". filesize($path));
     readfile($path);
 ?>
