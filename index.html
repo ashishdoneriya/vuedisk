@@ -188,7 +188,7 @@
 					}).then(value => {
 						if (value) {
 							axios.post('/apis/dir-add.php', {
-									'dirname': value,
+									'dirname': value.value,
 									'parentPath': this.currentDir
 								})
 								.then((response) => {

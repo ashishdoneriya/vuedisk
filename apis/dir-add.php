@@ -13,6 +13,7 @@ $path = $baseDir . $parentPath . '/' . $dirname;
 if (strpos($path, '/./') != false || strpos($path, '/../') != false) {
 	return;
 }
-mkdir($path, 644);
+
+mkdir($path);
 echo 'success';
 ?>
