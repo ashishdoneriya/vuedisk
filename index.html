@@ -33,6 +33,16 @@
 					<el-col>
 						<el-button size="small" type="primary" icon="el-icon-upload">Upload</el-button>
 						<el-button type="primary" @click="openRemoteUploadDialog()" size="small" icon="el-icon-upload">Remote Upload</el-button>
+						<el-dropdown style="margin-left:10px" split-button type="primary" size="small">
+							Dropdown List
+							<el-dropdown-menu slot="dropdown">
+								<el-dropdown-item>Cut</el-dropdown-item>
+								<el-dropdown-item>Copy</el-dropdown-item>
+								<el-dropdown-item>Paste</el-dropdown-item>
+								<el-dropdown-item>Delete</el-dropdown-item>
+								<el-dropdown-item>Get Size</el-dropdown-item>
+							</el-dropdown-menu>
+						</el-dropdown>
 						<i class="el-icon-refresh" style="font-weight: bold;margin-left: 10px;font-size: 20px" @click="refresh()"></i>
 						<el-button style="float:right" type="primary" @click="addDirectory()" size="small">New Folder</el-button>
 					</el-col>
@@ -64,7 +74,7 @@
 
 										</template>
 								</el-table-column>
-								<el-table-column label="Operations" align="right">
+								<el-table-column align="right">
 									<template slot-scope="scope">
 											<span v-if="!scope.row.isDir" style="margin-right: 10px">{{ scope.row.size }}</span>
 										</template>
@@ -72,10 +82,11 @@
 							</el-table>
 							<el-row type="flex" align="middle" class="row-bg" justify="space-between" style="margin-top: 20px">
 								<el-col>
+									<el-button>Cut</el-button>
 									<el-button>Copy</el-button>
-									<el-button>Move</el-button>
-									<el-button>Zip</el-button>
+									<el-button>Paste</el-button>
 									<el-button>Delete</el-button>
+									<el-button>Zip</el-button>
 								</el-col>
 								<el-col style="text-align:right">
 									<el-checkbox v-model="hiddenFiles">Show Hidden Files</el-checkbox>
