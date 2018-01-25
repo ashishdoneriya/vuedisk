@@ -10,7 +10,7 @@ if (strpos($parentPath, '/') != 0) {
 }
 
 $path = $baseDir . $parentPath . '/' . $dirname;
-if (strpos($path, '/./') != false || strpos($path, '/../') != false) {
+if (strpos($path, '/./') != false || strpos($path, '..') != false) {
 	return;
 }
 

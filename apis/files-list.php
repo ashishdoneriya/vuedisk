@@ -7,7 +7,7 @@ if (strpos($path, '/') != 0) {
 }
 $path = $baseDir . $path;
 
-if (strpos($path, '/./') != false || strpos($path, '/../') != false) {
+if (strpos($path, '/./') != false || strpos($path, '..') != false) {
 	echo "error";
 	return;
 }
