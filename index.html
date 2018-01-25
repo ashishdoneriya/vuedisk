@@ -33,14 +33,15 @@
 					<el-col>
 						<el-button size="small" type="primary" icon="el-icon-upload">Upload</el-button>
 						<el-button type="primary" @click="openRemoteUploadDialog()" size="small" icon="el-icon-upload">Remote Upload</el-button>
-						<el-dropdown style="margin-left:10px" split-button type="primary" size="small">
-							Dropdown List
+						<el-dropdown style="margin-left:10px" split-button type="primary" size="small" trigger="click">
+							Actions
 							<el-dropdown-menu slot="dropdown">
-								<el-dropdown-item>Cut</el-dropdown-item>
-								<el-dropdown-item>Copy</el-dropdown-item>
-								<el-dropdown-item>Paste</el-dropdown-item>
-								<el-dropdown-item>Delete</el-dropdown-item>
-								<el-dropdown-item>Get Size</el-dropdown-item>
+								<el-dropdown-item @click="setOperation('cut')" disabled="multipleSelection.length > 0">Cut</el-dropdown-item>
+								<el-dropdown-item @click="setOperation('copy')" disabled="multipleSelection.length > 0">Copy</el-dropdown-item>
+								<el-dropdown-item @click="paste()">Paste</el-dropdown-item>
+								<el-dropdown-item @click="delete()" disabled="multipleSelection.length > 0">Delete</el-dropdown-item>
+								<el-dropdown-item disabled="multipleSelection.length!=1">Rename</el-dropdown-item>
+								<el-dropdown-item disabled="multipleSelection.length > 0">Get Size</el-dropdown-item>
 							</el-dropdown-menu>
 						</el-dropdown>
 						<i class="el-icon-refresh" style="font-weight: bold;margin-left: 10px;font-size: 20px" @click="refresh()"></i>
@@ -62,16 +63,13 @@
 				<el-row type="flex" class="row-bg" justify="center">
 					<el-col :span="24">
 						<el-card>
-							<el-table ref="multipleTable" :data="tableDataFinal" style="width: 100%" @selection-change="handleSelectionChange" size="medium">
+							<el-table ref="multipleTable" :data="tableDataFinal" style="width: 100%" @selection-change="handleSelectionChange" size="medium" highlight-current-row>
 								<el-table-column type="selection" width="55">
 								</el-table-column>
 								<el-table-column label="Name">
 									<template slot-scope="scope">
-
 											<span v-if="scope.row.isDir" class="fonts" style="font-weight: bold;" @click="openDirFromList(scope.row.name)">{{ scope.row.name }}</span>
-
 											<span v-if="!scope.row.isDir" class="fonts" @click="download(scope.row.name)">{{ scope.row.name }}</span>
-
 										</template>
 								</el-table-column>
 								<el-table-column align="right">
@@ -82,7 +80,7 @@
 							</el-table>
 							<el-row type="flex" align="middle" class="row-bg" justify="space-between" style="margin-top: 20px">
 								<el-col>
-									<el-button>Cut</el-button>
+									<el-button @click="setOperation('cut')">Cut</el-button>
 									<el-button>Copy</el-button>
 									<el-button>Paste</el-button>
 									<el-button>Delete</el-button>
@@ -123,7 +121,12 @@
 				hiddenFiles: false,
 				remoteUploadDialog: false,
 				remoteUrl: '',
-				remoteUrlName: ''
+				remoteUrlName: '',
+				operation: {
+					type: '',
+					parentPath: '',
+					selectedFiles: ''
+				}
 			},
 			computed: {
 				stack() {
@@ -166,6 +169,49 @@
 					this.remoteUrl = '';
 					this.remoteUrlName = '';
 					this.remoteUploadDialog = true;
+				},
+
+				setOpearation(type) {
+					this.operation.type = type;
+					this.operation.parentPath = this.currentDir;
+					this.operation.selectedFiles = this.multipleSelection;
+				},
+
+				paste() {
+					var url = `/apis/${this.operation.type}`;
+					axios.post(url, {
+							'parentDir': this.operation.parentPath,
+							'files': JSON.stringify(this.operation.selectedFiles),
+							'destinationDir' : this.currentDir
+						}).then((response) => {
+							this.refresh();
+						}).catch(() => {
+							this.$message({
+								type: 'error',
+								message: `Unable to ${this.operation.type} file(s)`
+							});
+						});
+				},
+
+				delete() {
+					this.$confirm('Are you sure want to permanently delete ?', {
+						confirmButtonText: 'OK',
+						cancelButtonText: 'Cancel',
+						type: 'warning'
+					}).then(() => {
+						axios.post('/apis/delete.php', {
+							'parentDir': this.currentDir,
+							'files': JSON.stringify(this.multipleSelection)
+						}).then((response) => {
+							this.refresh();
+						}).catch(() => {
+							this.$message({
+								type: 'error',
+								message: 'Unable to delete files'
+							});
+						});
+					}).catch(() => {
+					});
 				},
 
 				remoteUpload() {
@@ -223,7 +269,7 @@
 				},
 
 				handleSelectionChange(val) {
-					this.multipleSelection = val;
+					this.multipleSelection = val.map(obj => obj.name);
 				},
 				openDirFromList(name) {
 					if (this.currentDir == '/') {
