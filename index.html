@@ -102,7 +102,7 @@
 					</el-upload>
 				</el-form>
 				<span slot="footer" class="dialog-footer">
-					<el-button type="primary" @click="localFileUploadDialog = false">Close</el-button>
+					<el-button type="primary" @click="localFileUploadDialog = false;refresh()">Close</el-button>
 				</span>
 			</el-dialog>
 			<el-dialog title="Remote File Upload" :visible.sync="remoteUploadDialog">
