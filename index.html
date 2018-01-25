@@ -45,7 +45,7 @@
 								</el-dropdown-menu>
 							</el-dropdown>
 							<i class="el-icon-refresh" style="font-weight: bold;margin-left: 10px;font-size: 20px" @click="refresh()"></i>
-							<el-button style="float:right" type="primary" @click="addDirectory()" size="small">New Folder</el-button>
+							<el-button style="float:right" type="primary" @click="addDirectory()" size="small" icon="el-icon-plus">New Folder</el-button>
 						</el-col>
 					</el-row>
 					<el-row style="margin: 25px 0">
@@ -79,13 +79,6 @@
 									</el-table-column>
 								</el-table>
 								<el-row type="flex" align="middle" class="row-bg" justify="space-between" style="margin-top: 20px">
-									<el-col>
-										<el-button @click="setOperation('cut')">Cut</el-button>
-										<el-button>Copy</el-button>
-										<el-button>Paste</el-button>
-										<el-button>Delete</el-button>
-										<el-button>Zip</el-button>
-									</el-col>
 									<el-col style="text-align:right">
 										<el-checkbox v-model="hiddenFiles">Show Hidden Files</el-checkbox>
 									</el-col>
@@ -102,7 +95,7 @@
 					</el-upload>
 				</el-form>
 				<span slot="footer" class="dialog-footer">
-					<el-button type="primary" @click="localFileUploadDialog = false;refresh()">Close</el-button>
+					<el-button type="primary" @click="closeLocalUploadDialog()">Close</el-button>
 				</span>
 			</el-dialog>
 			<el-dialog title="Remote File Upload" :visible.sync="remoteUploadDialog">
@@ -178,8 +171,13 @@
 				},
 				methods: {
 					openLocalUploadDialog() {
-						this.uploadFilesList.splice(0, this.uploadFilesList.length);
 						this.localFileUploadDialog = true;
+					},
+
+					closeLocalUploadDialog() {
+						this.localFileUploadDialog = false;
+						refresh();
+						this.uploadFilesList.splice(0, this.uploadFilesList.length);
 					},
 
 					openRemoteUploadDialog() {
