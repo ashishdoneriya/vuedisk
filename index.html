@@ -97,7 +97,7 @@
 			</el-container>
 			<el-dialog title="File(s) Upload" :visible.sync="localFileUploadDialog">
 				<el-form>
-					<el-upload :action="'/apis/upload.php?parentDir=' + currentDir" multiple>
+					<el-upload :action="'/apis/upload.php?parentDir=' + currentDir" multiple :file-list="uploadFilesList">
 						<el-button size="small" type="primary">Add Files</el-button>
 					</el-upload>
 				</el-form>
@@ -133,6 +133,7 @@
 					localFileUploadDialog : false,
 					remoteUrl: '',
 					remoteUrlName: '',
+					uploadFilesList : [],
 					operation: {
 						type: '',
 						parentPath: '',
@@ -177,6 +178,7 @@
 				},
 				methods: {
 					openLocalUploadDialog() {
+						this.uploadFilesList.splice(0, this.uploadFilesList.length);
 						this.localFileUploadDialog = true;
 					},
 
