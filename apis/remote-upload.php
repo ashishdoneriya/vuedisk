@@ -9,7 +9,6 @@ $filename = htmlspecialchars(strip_tags($data['filename']));
 if ($filename == null || $filename == '') {
 	$filename = basename($url);
 }
-copy($url, $parentDir . '/' . $filename);
 if (strpos($parentDir, '/') != 0) {
 	$parentDir =  '/' . $parentDir;
 }
@@ -20,7 +19,8 @@ if (strpos($parentDir, '/./') != false || strpos($parentDir, '..') != false) {
 	return;
 }
 
-shell_exec('wget $url -O $filename -P $parentDir');
+$command = 'wget --background --quiet "' . $url . '" -O "' . $parentDir . '/' . $filename . '"';
+shell_exec($command);
 
 echo "success";
 ?>
