@@ -39,7 +39,7 @@
 									<el-dropdown-item command="cut" :disabled="multipleSelection.length == 0">Cut</el-dropdown-item>
 									<el-dropdown-item command="copy" :disabled="multipleSelection.length == 0">Copy</el-dropdown-item>
 									<el-dropdown-item command="paste" :disabled="operation.parentPath.length == 0">Paste</el-dropdown-item>
-									<el-dropdown-item command="delete" :disabled="multipleSelection.length == 0">Delete</el-dropdown-item>
+									<el-dropdown-item command="delete" :disabled="multipleSelection.length != 1">Delete</el-dropdown-item>
 									<el-dropdown-item command="rename" :disabled="multipleSelection.length != 1">Rename</el-dropdown-item>
 									<el-dropdown-item command="size" :disabled="multipleSelection.length == 0">Get Size</el-dropdown-item>
 								</el-dropdown-menu>
@@ -203,6 +203,8 @@
 							this.rename();
 						} else if (command == 'size') {
 							this.fetchSize();
+						} else if (command == 'delete') {
+							this.delete();
 						}
 					},
 
@@ -274,7 +276,7 @@
 						}).then(() => {
 							axios.post('/apis/delete.php', {
 								'parentDir': this.currentDir,
-								'files': JSON.stringify(this.multipleSelection)
+								'file': this.multipleSelection[0]
 							}).then((response) => {
 								this.refresh();
 							}).catch(() => {
