@@ -292,7 +292,7 @@
 					remoteUpload() {
 						this.remoteUploadDialog = false;
 						axios.post('/apis/remote-upload.php', {
-							'currentDir': this.currentDir,
+							'parentDir': this.currentDir,
 							'url': this.remoteUrl,
 							'filename': this.remoteUrlName
 						}).then((response) => {
