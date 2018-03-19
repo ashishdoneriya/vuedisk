@@ -1,6 +1,12 @@
 <?php
-
 include_once './base-dir.php';
+
+if (!isSessionActive()) {
+	echo '{"status" : "failed", "message" : "Login Required"}';
+	return;
+}
+
+
 
 		$path = $_GET['path'];
 		if (strpos($path, '/') != 0) {
