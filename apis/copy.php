@@ -2,6 +2,14 @@
 include_once './base-dir.php';
 
 header("Access-Control-Allow-Methods: POST");
+
+if (!isSessionActive()) {
+	echo '{"status" : "failed", "message" : "Login Required"}';
+	return;
+}
+ 
+$email = $_SESSION['email'];
+
 $data = json_decode(file_get_contents('php://input'), true);
 $sourceDir = htmlspecialchars(strip_tags($data['sourceDir']));
 $destinationDir = htmlspecialchars(strip_tags($data['destinationDir']));
