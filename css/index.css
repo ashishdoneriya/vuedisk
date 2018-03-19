@@ -50,3 +50,6 @@ body {
 .el-card {
 	border-color : #bbb;
 }
+body {
+	margin: 0px;
+}
