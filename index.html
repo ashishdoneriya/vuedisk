@@ -20,13 +20,31 @@
 		<script src="/js/elementui.min.js"></script>
 		<script src="/js/element.en.js"></script>
 		<script src="/js/axios.min.js"></script>
+		<script src="/js/cookies.min.js"></script>
 	</head>
 
 	<body>
 		<div id="vapp">
-			<el-container class="container">
+			<el-row v-show="isLoggedIn == false" type="flex" class="row-bg" justify="center" style="margin-top:100px">
+				<el-col :xs="24" :sm="16" :md="12" :lg="8">
+					<el-card class="box-card">
+						<div slot="header" class="clearfix" style="text-align:center">
+							<span>Login</span>
+						</div>
+						<el-form :label-position="'left'" label-width="80px">
+							<el-form-item label="Password">
+								<el-input v-model="password" type="password"></el-input>
+							</el-form-item>
+							<el-form-item>
+								<el-button type="primary" @click="login">Login</el-button>
+							</el-form-item>
+						</el-form>
+					</el-card>
+				</el-col>
+			</el-row>
+			<el-container class="container" v-show="isLoggedIn == true">
 				<el-header class="text-center">
-					<h1>File Manager</h1>
+					<h1>File Manager<span style="float:right;cursor: pointer;font-size:14px; font-weight: normal" @click="logout()">Logout</span></h1>
 				</el-header>
 				<el-main>
 					<el-row type="flex" class="row-bg" justify="space-between">
@@ -118,20 +136,22 @@
 			new Vue({
 				el: '#vapp',
 				data: {
+					password: '',
 					tableData: [],
 					multipleSelection: [],
 					currentDir: '/',
 					hiddenFiles: false,
 					remoteUploadDialog: false,
-					localFileUploadDialog : false,
+					localFileUploadDialog: false,
 					remoteUrl: '',
 					remoteUrlName: '',
-					uploadFilesList : [],
+					uploadFilesList: [],
 					operation: {
 						type: '',
 						parentPath: '',
 						selectedFiles: ''
-					}
+					},
+					isLoggedIn: Cookies.get("LAST_ACTIVITY") ? true : false
 				},
 				computed: {
 					stack() {
@@ -167,9 +187,77 @@
 					}
 				},
 				created() {
+					this.extractUrlParam();
+					this.isLoggedIn = Cookies.get("LAST_ACTIVITY") ? true : false;
+					if (!this.isLoggedIn) {
+						return;
+					}
+					this.isLoggedIn = true;
 					this.refresh();
 				},
 				methods: {
+
+					extractUrlParam() {
+						var paramsPath = location.search.substring(1);
+						if (paramsPath) {
+							var parameters = paramsPath.split("&");
+							if (parameters.length > 0) {
+								var firstParam = parameters[0];
+								if (firstParam.indexOf('=') != -1) {
+									firstParamVal = firstParam.split('=')[1];
+									if (firstParamVal) {
+										firstParamVal = unescape(firstParamVal);
+										if (firstParamVal) {
+											console.log(firstParamVal);
+											this.currentDir = firstParamVal;
+										}
+									}
+								}
+							}
+						}
+					},
+
+					login () {
+						if (!this.password) {
+							this.$message({
+								message: 'Please fill password',
+								type: 'error',
+								center: true
+							});
+							return;
+						}
+
+						axios.post('/apis/signin.php', {
+							'password': this.password
+						}).then(result => {
+							if (result.data.status == 'success') {
+								Cookies.set('LAST_ACTIVITY', 'youcandeleteit', { expires: 86400 }); // 1 day
+								this.isLoggedIn = true;
+								this.refresh();
+							} else {
+								this.password = '';
+								this.$message({
+									message: result.data.message,
+									type: 'error',
+									center: true
+								});
+							}
+						}).catch(error => {
+							this.$message({
+								message: 'Error while checking login details',
+								type: 'error',
+								center: true
+							});
+						});
+					},
+
+					logout() {
+						window.history.replaceState('', 'File Manager', '');
+						axios.post('/apis/signout.php');
+						Cookies.expire("LAST_ACTIVITY");
+						this.isLoggedIn = false;
+					},
+
 					openLocalUploadDialog() {
 						this.localFileUploadDialog = true;
 					},
@@ -265,7 +353,6 @@
 								});
 							}
 						}).catch(() => { });
-
 					},
 
 					delete() {
@@ -306,6 +393,7 @@
 							message: 'Your file will soon be downloaded'
 						});
 					},
+
 					openStack(index) {
 						var path = '';
 						for (var i = 0; i <= index; i++) {
@@ -313,6 +401,7 @@
 						}
 						this.openDir(path);
 					},
+
 					addDirectory() {
 						this.$prompt('Please enter directory name', {
 							confirmButtonText: 'Add',
@@ -346,6 +435,7 @@
 					handleSelectionChange(val) {
 						this.multipleSelection = val.map(obj => obj.name);
 					},
+
 					openDirFromList(name) {
 						if (this.currentDir == '/') {
 							this.openDir('/' + name);
@@ -353,7 +443,9 @@
 							this.openDir(this.currentDir + '/' + name);
 						}
 					},
+
 					openDir(path) {
+						window.history.replaceState('', 'File Manager', '?path=' + path);
 						axios.get('/apis/files-list.php?path=' + path)
 							.then((response) => {
 								this.currentDir = path;
@@ -362,10 +454,11 @@
 							.catch(() => {
 								this.$message({
 									type: 'error',
-									message: 'Unable to fetch contents of Path [ ' + path + ' ]'
+									message: 'Unable to fetch contents of ' + path
 								});
 							});
 					},
+
 					download(name) {
 						var path = '';
 						if (this.currentDir == '/') {
