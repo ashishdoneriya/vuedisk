@@ -2,8 +2,8 @@
 	$baseDir = "/home/impadmin";
 	$globalPassword = "pass@123";
 	// Note : don't add '/' at the end
-	
-	
+
+
 function isSessionActive() {
 	session_start();
 	if (isset($_SESSION['LAST_ACTIVITY']) && ($_SESSION['LAST_ACTIVITY'] + 86400) > time()) {

@@ -32,7 +32,7 @@ foreach ($files as $file) {
 	if (strpos($sourceDir, '/./') != false || strpos($sourceDir, '..') != false) {
 		return;
 	}
-	shell_exec('mv "' . $sourceDir . '/' . $file . '" "' . $destinationDir . '/' . $file . '"');
+	rename($sourceDir . '/' . $file, $destinationDir . '/' . $file);
 }
 
 echo 'success';

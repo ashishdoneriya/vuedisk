@@ -46,6 +46,9 @@ body {
 	color: #333;
 	cursor: pointer;
 }
+.fonts:hover {
+	text-decoration: underline;
+}
 
 .el-card {
 	border-color : #bbb;

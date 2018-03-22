@@ -27,10 +27,35 @@ if ($fullPath == $baseDir . '/' || $fullPath == $baseDir) {
 }
 
 if (is_dir($fullPath)) {
-	shell_exec('rmdir "' . $fullPath . '"');
+	if (endswith($fullPath, '/')) {
+			$fullPath = rtrim($fullPath, '/');
+	}
+	rrmdir($fullPath);
 } else {
-	shell_exec('rm "' . $fullPath . '"');
+	unlink($fullPath);
 }
 
 echo 'success';
+
+function endswith($string, $test) {
+	$strlen = strlen($string);
+	$testlen = strlen($test);
+	if ($testlen > $strlen) return false;
+	return substr_compare($string, $test, $strlen - $testlen, $testlen) === 0;
+}
+
+function rrmdir($dir) {
+	if (is_dir($dir)) {
+		$objects = scandir($dir);
+		foreach ($objects as $object) {
+			if ($object != "." && $object != "..") {
+				if (is_dir($dir."/".$object))
+					rrmdir($dir."/".$object);
+				else
+					unlink($dir."/".$object);
+			}
+		}
+		rmdir($dir);
+	}
+}
 ?>

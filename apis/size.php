@@ -54,7 +54,7 @@ function getDirectorySize($directory) {
 	$size = 0;
 	foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory)) as $file) {
 			try {
-				$size+=$file->getSize();
+				$size += $file->getSize();
 			} catch (Exception $e) {
 
 			}

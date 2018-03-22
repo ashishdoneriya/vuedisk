@@ -23,7 +23,7 @@ if (strpos($parentDir, '/./') != false || strpos($parentDir, '..') != false
 	return;
 }
 
-shell_exec('mv "' . $parentDir . '/' . $oldName . '" "' . $parentDir . '/' . $newName . '"');
+rename($parentDir . '/' . $oldName, $parentDir . '/' . $newName);
 
 echo 'success';
 ?>

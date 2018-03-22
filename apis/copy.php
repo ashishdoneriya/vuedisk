@@ -7,7 +7,7 @@ if (!isSessionActive()) {
 	echo '{"status" : "failed", "message" : "Login Required"}';
 	return;
 }
- 
+
 $email = $_SESSION['email'];
 
 $data = json_decode(file_get_contents('php://input'), true);
@@ -34,7 +34,29 @@ foreach ($files as $file) {
 	if (strpos($sourceDir, '/./') != false || strpos($sourceDir, '..') != false) {
 		return;
 	}
-	shell_exec('cp -r "' . $sourceDir . '/' . $file . '" "' . $destinationDir . '/' . $file . '"');
+	$src = $sourceDir . '/' . $file;
+	$dst = $destinationDir . '/' . $file;
+	if(is_dir($src)) {
+		recursive_copy($src, $dst);
+	} else {
+		copy($src, $dst);
+	}
+}
+
+function recursive_copy($src, $dst) {
+	$dir = opendir($src);
+	@mkdir($dst);
+	while(false !== ( $file = readdir($dir)) ) {
+			if (( $file != '.' ) && ( $file != '..' )) {
+					if ( is_dir($src . '/' . $file) ) {
+						recursive_copy($src . '/' . $file,$dst . '/' . $file);
+					}
+					else {
+							copy($src . '/' . $file,$dst . '/' . $file);
+					}
+			}
+	}
+	closedir($dir);
 }
 
 echo 'success';
