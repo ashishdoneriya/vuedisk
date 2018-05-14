@@ -8,8 +8,10 @@ if (!isSessionActive()) {
 
 header("Access-Control-Allow-Methods: POST");
 $data = json_decode(file_get_contents('php://input'), true);
-$parentDir = htmlspecialchars(strip_tags($data['parentDir']));
-$file = htmlspecialchars(strip_tags($data['file']));
+$parentDir = $data['parentDir'];
+$files = $data['files'];
+$files = json_decode($files, true);
+
 
 if (strpos($parentDir, '/') != 0) {
 	$parentDir =  '/' . $parentDir;
@@ -20,19 +22,21 @@ if (strpos($parentDir, '/./') != false || strpos($parentDir, '..') != false) {
 	return;
 }
 
-$fullPath = $parentDir . '/' . $file;
+foreach ($files as $file) {
+	$fullPath = $parentDir . '/' . $file;
 
-if ($fullPath == $baseDir . '/' || $fullPath == $baseDir) {
-	return;
-}
-
-if (is_dir($fullPath)) {
-	if (endswith($fullPath, '/')) {
-			$fullPath = rtrim($fullPath, '/');
+	if ($fullPath == $baseDir . '/' || $fullPath == $baseDir) {
+		return;
 	}
-	rrmdir($fullPath);
-} else {
-	unlink($fullPath);
+
+	if (is_dir($fullPath)) {
+		if (endswith($fullPath, '/')) {
+			$fullPath = rtrim($fullPath, '/');
+		}
+		rrmdir($fullPath);
+	} else {
+		unlink($fullPath);
+	}
 }
 
 echo 'success';

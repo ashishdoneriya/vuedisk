@@ -6,7 +6,7 @@ if (!isSessionActive()) {
 	return;
 }
 
-$path =  htmlspecialchars(strip_tags($_GET['path']));
+$path =  $_GET['path'];
 if (strpos($path, '/') != 0) {
 	$path =  '/' . $path;
 }

@@ -8,11 +8,9 @@ if (!isSessionActive()) {
 	return;
 }
 
-$email = $_SESSION['email'];
-
 $data = json_decode(file_get_contents('php://input'), true);
-$sourceDir = htmlspecialchars(strip_tags($data['sourceDir']));
-$destinationDir = htmlspecialchars(strip_tags($data['destinationDir']));
+$sourceDir = $data['sourceDir'];
+$destinationDir = $data['destinationDir'];
 $files = $data['files'];
 $files = json_decode($files, true);
 
@@ -45,7 +43,7 @@ foreach ($files as $file) {
 
 function recursive_copy($src, $dst) {
 	$dir = opendir($src);
-	@mkdir($dst);
+	mkdir($dst);
 	while(false !== ( $file = readdir($dir)) ) {
 			if (( $file != '.' ) && ( $file != '..' )) {
 					if ( is_dir($src . '/' . $file) ) {

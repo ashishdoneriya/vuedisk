@@ -8,7 +8,7 @@ if (!isSessionActive()) {
 
 header("Access-Control-Allow-Methods: POST");
 $data = json_decode(file_get_contents('php://input'), true);
-$parentDir = htmlspecialchars(strip_tags($data['parentDir']));
+$parentDir = $data['parentDir'];
 
 $files = $data['files'];
 $files = json_decode($files, true);

@@ -8,9 +8,9 @@ if (!isSessionActive()) {
 
 header("Access-Control-Allow-Methods: POST");
 $data = json_decode(file_get_contents('php://input'), true);
-$parentDir = htmlspecialchars(strip_tags($data['parentDir']));
-$oldName = htmlspecialchars(strip_tags($data['oldName']));
-$newName = htmlspecialchars(strip_tags($data['newName']));
+$parentDir = $data['parentDir'];
+$oldName = $data['oldName'];
+$newName = $data['newName'];
 
 if (strpos($parentDir, '/') != 0) {
 	$parentDir =  '/' . $parentDir;
