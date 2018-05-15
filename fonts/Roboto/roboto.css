@@ -26,3 +26,11 @@
   font-weight: 700;
   src: local('Roboto Bold'), local('Roboto-Bold'), url(Roboto-Bold.ttf) format('truetype');
 }
+
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 700;
+  src: local('Roboto Black'), local('Roboto-Black'), url(Roboto-Black.ttf) format('truetype');
+}
+

@@ -17,7 +17,9 @@ a {
 
 h1 {
 	font-family: 'Roboto';
-	font-weight: bold;
+	font-weight: 700;
+	font-size:40px;
+	color:#444;
 }
 
 a,
@@ -37,7 +39,6 @@ body {
 
 .container {
 	margin: 30px auto;
-	max-width: 900px;
 	border-radius: 1px;
 	background: #fff;
 }

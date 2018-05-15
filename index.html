@@ -13,6 +13,7 @@
 		<link rel="stylesheet" href="/css/theme/index.css">
 		<link rel="stylesheet" href="/fonts/Roboto/roboto.css">
 		<link rel="stylesheet" href="/css/index.css">
+		<link rel="stylesheet" href="/fonts/Roboto/roboto.css">
 		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 		<script src="/js/vue.min.js"></script>
 		<script src="/js/vue-router.min.js"></script>
@@ -33,7 +34,7 @@
 						</div>
 						<el-form :label-position="'left'" label-width="80px">
 							<el-form-item label="Password">
-								<el-input v-model="password" type="password"></el-input>
+								<el-input v-model="password" @keyup.enter="login" type="password"></el-input>
 							</el-form-item>
 							<el-form-item>
 								<el-button type="primary" @click="login">Login</el-button>
@@ -42,9 +43,11 @@
 					</el-card>
 				</el-col>
 			</el-row>
-			<el-container class="container" v-show="isLoggedIn == true">
-				<el-header class="text-center">
-					<h1>File Manager<span style="float:right;cursor: pointer;font-size:14px; font-weight: normal" @click="logout()">Logout</span></h1>
+			<el-container class="container" v-bind:style="{maxWidth : pageWidth}" v-show="isLoggedIn == true">
+				<el-header class="text-center" style="margin-top:20px;margin-bottom:30px">
+					<h1>File Manager
+						<span style="float:right;cursor: pointer;font-size:14px; font-weight: normal" @click="logout()">Logout</span>
+					</h1>
 				</el-header>
 				<el-main>
 					<el-row type="flex" class="row-bg" justify="space-between">
@@ -62,6 +65,12 @@
 									<el-dropdown-item command="size" :disabled="multipleSelection.length == 0">Get Size</el-dropdown-item>
 								</el-dropdown-menu>
 							</el-dropdown>
+							<div style="display: inline-block">
+								<el-radio-group v-model="displayMode" size="small" style="margin-left:10px">
+									<el-radio label="list" border>List</el-radio>
+									<el-radio label="gallery" border>Gallery</el-radio>
+								</el-radio-group>
+							</div>
 							<i class="el-icon-refresh" style="font-weight: bold;margin-left: 10px;font-size: 20px" @click="refresh()"></i>
 							<el-button style="float:right" type="primary" @click="addDirectory()" size="small" icon="el-icon-plus">New Folder</el-button>
 						</el-col>
@@ -80,7 +89,7 @@
 					</el-row>
 					<el-row type="flex" class="row-bg" justify="center">
 						<el-col :span="24">
-							<el-card>
+							<el-card v-show="displayMode == 'list'">
 								<el-table ref="multipleTable" :data="tableDataFinal" style="width: 100%" @selection-change="handleSelectionChange" size="medium" highlight-current-row>
 									<el-table-column type="selection" width="55">
 									</el-table-column>
@@ -102,6 +111,28 @@
 									</el-col>
 								</el-row>
 							</el-card>
+							<div v-if="displayMode == 'gallery'">
+								<el-row style="margin-bottom:20px" v-if="totalCurrentDirs > 0">
+									<span style="font-family:Roboto;font-size:18px;font-weight:400;color:#555">Folders<span>
+								</el-row>
+								<el-row v-if="totalCurrentDirs > 0">
+									<div v-for="row of this.tableDataFinal" @click="openDirFromList(row.name)" style="display: inline-block;margin:10px;cursor:pointer">
+										<div v-if="row.isDir" :title="row.name" style="width:200px;height:42px;border:1px solid #eee;font-size:13px;color:#444;padding-left:5px;margin:5px;border-radius:5px;display:table-cell;vertical-align:middle">
+											<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:20px;height:20px;fill:#555;margin:0 auto;margin-right:5px;float:left">
+												<path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
+												<path d="M0 0h24v24H0z" fill="none" />
+											</svg>
+											<span style="display:inline-block;vertical-align:middle;font-size:15px;line-height:20px;color:#555;font-weight:500;max-width:175px;overflow:hidden;text-overflow:ellipsis;max-height:40px">{{row.name}}</span>
+										</div>
+									</div>
+								</el-row>
+								<el-row style="margin-bottom:20px" v-if="totalCurrentFiles > 0">
+									<span style="font-family:Roboto;font-size:18px;font-weight:400;color:#555">Files<span>
+								</el-row>
+								<el-row v-if="totalCurrentFiles > 0">
+									<img v-for="row of this.tableDataFinal" v-if="!row.isDir" :src="'/apis/thumbnail.php?type=small&name=' + row.name + '&parent=' + currentDir" style="height:200px;margin: 5px;float:left">
+								</el-row>
+							</div>
 						</el-col>
 					</el-row>
 				</el-main>
@@ -151,9 +182,14 @@
 						parentPath: '',
 						selectedFiles: ''
 					},
-					isLoggedIn: Cookies.get("LAST_ACTIVITY") ? true : false
+					displayMode: 'list',
+					totalCurrentFiles: 0,
+					totalCurrentDirs : 0,
+					isLoggedIn: Cookies.get("LAST_ACTIVITY") ? true : false,
+					imageExtensions: ["ase", "art", "bmp", "blp", "cd5", "cit", "cpt", "cr2", "cut", "dds", "dib", "djvu", "egt", "exif", "gif", "gpl", "grf", "icns", "ico", "iff", "jng", "jpeg", "jpg", "jfif", "jp2", "jps", "lbm", "max", "miff", "mng", "msp", "nitf", "ota", "pbm", "pc1", "pc2", "pc3", "pcf", "pcx", "pdn", "pgm", "PI1", "PI2", "PI3", "pict", "pct", "pnm", "pns", "ppm", "psb", "psd", "pdd", "psp", "px", "pxm", "pxr", "qfx", "raw", "rle", "sct", "sgi", "rgb", "int", "bw", "tga", "tiff", "tif", "vtf", "xbm", "xcf", "xpm", "3dv", "amf", "ai", "awg", "cgm", "cdr", "cmx", "dxf", "e2d", "egt", "eps", "fs", "gbr", "odg", "svg", "stl", "vrml", "x3d", "sxd", "v2d", "vnd", "wmf", "emf", "art", "xar", "png", "webp", "jxr", "hdp", "wdp", "cur", "ecw", "iff", "lbm", "liff", "nrrd", "pam", "pcx", "pgf", "sgi", "rgb", "rgba", "bw", "int", "inta", "sid", "ras", "sun", "tga"]
 				},
 				computed: {
+
 					stack() {
 						var substring = this.currentDir;
 						if (this.currentDir == '/') {
@@ -162,10 +198,23 @@
 						substring = substring.substring(1);
 						return substring.split('/');
 					},
+
+					pageWidth() {
+						if (this.displayMode == 'gallery') {
+							document.body.style.background = '#fff';
+							return '90%';
+						}
+						document.body.style.background = '#232323';
+						return '900px';
+					},
+
 					tableDataFinal() {
+						this.totalCurrentFiles = 0;
+						this.totalCurrentDirs = 0;
 						var arrDir = [];
 						for (var temp of this.tableData) {
 							if (temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
+								this.totalCurrentDirs++;
 								arrDir.push(temp);
 							}
 						}
@@ -173,7 +222,10 @@
 						var arrFile = [];
 						for (var temp of this.tableData) {
 							if (!temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
-								arrFile.push(temp);
+								if (this.displayMode == 'list' || (this.displayMode == 'gallery' && this.isImage(temp.name))) {
+									this.totalCurrentFiles++;
+									arrFile.push(temp);
+								}
 							}
 						}
 
@@ -185,7 +237,9 @@
 						});
 						return arrDir.concat(arrFile);
 					}
+
 				},
+
 				created() {
 					this.extractUrlParam();
 					this.isLoggedIn = Cookies.get("LAST_ACTIVITY") ? true : false;
@@ -195,7 +249,12 @@
 					this.isLoggedIn = true;
 					this.refresh();
 				},
+
 				methods: {
+
+					isImage(name) {
+						return this.imageExtensions.indexOf(name.substring(name.lastIndexOf('.') + 1)) != -1;
+					},
 
 					extractUrlParam() {
 						var paramsPath = location.search.substring(1);
@@ -208,7 +267,6 @@
 									if (firstParamVal) {
 										firstParamVal = unescape(firstParamVal);
 										if (firstParamVal) {
-											console.log(firstParamVal);
 											this.currentDir = firstParamVal;
 										}
 									}
@@ -217,7 +275,7 @@
 						}
 					},
 
-					login () {
+					login() {
 						if (!this.password) {
 							this.$message({
 								message: 'Please fill password',
@@ -459,14 +517,12 @@
 							});
 					},
 
+					getThumbnailSmall(name) {
+						return
+					},
+
 					download(name) {
-						var path = '';
-						if (this.currentDir == '/') {
-							path = '/' + name;
-						} else {
-							path = this.currentDir + '/' + name;
-						}
-						document.location = '/apis/download.php?path=' + path;
+						document.location = '/apis/download.php?path=' + (this.currentDir == '/' ? '/' : this.currentDir + '/') + name;
 					}
 				}
 			});
