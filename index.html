@@ -136,8 +136,9 @@
 										v-for="row of this.tableDataFinal"
 										v-if="!row.isDir"
 										v-lazy="'/apis/thumbnail.php?type=small&name=' + row.name + '&parent=' + currentDir"
-										v-img="{group :  'gallery', src : '/apis/thumbnail.php?type=large&name=' + row.name + '&parent=' + currentDir}" 
-										style="height:320px;margin: 5px;float:left">
+										v-img="{group :  'gallery', title: row.name, src : '/apis/thumbnail.php?type=large&name=' + row.name + '&parent=' + currentDir}" 
+										style="height:320px;margin: 5px;float:left"
+										:title="row.name">
 								</el-row>
 							</div>
 						</el-col>
