@@ -27,19 +27,25 @@ if ($extension != 'jpg' && $extension != 'jpeg' && $extension != 'JPG' && $exten
 } else {
 	$thumbnailDirPath = $parent . '/' . '.thumbnail/';
 
-	$finalPath = $thumbnailDirPath . ($type == 'small' ? '200px' : '500px') . '/' . $name;
+	$finalPath = $thumbnailDirPath . ($type == 'small' ? '320px' : '720px') . '/' . $name;
 
 	if (!file_exists($finalPath)) {
 		if (!file_exists($thumbnailDirPath)) {
 			mkdir($thumbnailDirPath);
 		}
-		if (!file_exists($thumbnailDirPath . '/200px')) {
-			mkdir($thumbnailDirPath . '/200px');
+		if (!file_exists($thumbnailDirPath . '/320px')) {
+			mkdir($thumbnailDirPath . '/320px');
 		}
-		if (!file_exists($thumbnailDirPath . '/500px')) {
-			mkdir($thumbnailDirPath . '/500px');
+		if (!file_exists($thumbnailDirPath . '/720px')) {
+			mkdir($thumbnailDirPath . '/720px');
 		}
-		make_thumb($parent . '/' . $name, $finalPath, '200');
+		if ($type == 'small') {
+			make_thumb($parent . '/' . $name, $finalPath, '320');
+		}
+		if ($type == 'large') {
+			make_thumb($parent . '/' . $name, $finalPath, '720');
+		}
+		
 	}
 
 }
@@ -62,6 +68,11 @@ function make_thumb($src, $dest, $desired_height) {
 	$source_image = imagecreatefromjpeg($src);
 	$width = imagesx($source_image);
 	$height = imagesy($source_image);
+	
+	if ($height < $desired_height || $height < 2 * $desired_height) {
+		symlink($src, $dest);
+		return;
+	}
 	
 	/* find the "desired height" of this thumbnail, relative to the desired width  */
 	$desired_width = floor($desired_height / $height * $width);
