@@ -2,6 +2,7 @@
 include_once './base-dir.php';
 
 if (!isSessionActive()) {
+	http_response_code(401);
 	echo '{"status" : "failed", "message" : "Login Required"}';
 	return;
 }
@@ -16,6 +17,12 @@ if (strpos($parentPath, '/') != 0) {
 
 $path = $baseDir . $parentPath . '/' . $dirname;
 if (strpos($path, '/./') != false || strpos($path, '..') != false) {
+	return;
+}
+
+if (file_exists($path)){
+	http_response_code(409);
+	echo '{"status" : "failed", "message" : "Directory already exists"}';
 	return;
 }
 

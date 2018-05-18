@@ -2,6 +2,7 @@
 include_once './base-dir.php';
 
 if (!isSessionActive()) {
+	http_response_code(401);
 	echo '{"status" : "failed", "message" : "Login Required"}';
 	return;
 }
@@ -36,6 +37,14 @@ foreach ($files as $file) {
 		rrmdir($fullPath);
 	} else {
 		unlink($fullPath);
+		$thumbnailPath1 = $parentDir . '/.thumbnail/320px/' . $file;
+		if (file_exists($thumbnailPath1)) {
+			unlink($thumbnailPath1);
+		}
+		$thumbnailPath2 = $parentDir . '/.thumbnail/720px/' . $file;
+		if (file_exists($thumbnailPath2)) {
+			unlink($thumbnailPath2);
+		}
 	}
 }
 

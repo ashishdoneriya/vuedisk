@@ -2,6 +2,7 @@
 include_once './base-dir.php';
 ini_set('memory_limit', '-1');
 if (!isSessionActive()) {
+	http_response_code(401);
 	echo '{"status" : "failed", "message" : "Login Required"}';
 	return;
 }

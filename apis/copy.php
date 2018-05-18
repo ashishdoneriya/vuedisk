@@ -4,6 +4,7 @@ include_once './base-dir.php';
 header("Access-Control-Allow-Methods: POST");
 
 if (!isSessionActive()) {
+	http_response_code(401);
 	echo '{"status" : "failed", "message" : "Login Required"}';
 	return;
 }
@@ -46,12 +47,36 @@ function recursive_copy($src, $dst) {
 	mkdir($dst);
 	while(false !== ( $file = readdir($dir)) ) {
 			if (( $file != '.' ) && ( $file != '..' )) {
-					if ( is_dir($src . '/' . $file) ) {
-						recursive_copy($src . '/' . $file,$dst . '/' . $file);
+				if ( is_dir($src . '/' . $file) ) {
+					recursive_copy($src . '/' . $file,$dst . '/' . $file);
+				} else {
+					if (!is_dir($src . '/' . $file)) {
+						if (file_exists($dst . '/' . $file)) {
+							continue;
+						}
+						if (file_exists($src . '/.thumbnail/320px/' . $file)) {
+							if (!file_exists( $dst . '/.thumbnail')) {
+								mkdir( $dst . '/.thumbnail');
+							}
+							if (!file_exists($dst . '/.thumbnail/320px')) {
+								mkdir( $dst . '/.thumbnail/320px');
+							}
+							copy($src . '/.thumbnail/320px/' . $file, $dst . '/.thumbnail/320px/' . $file);
+						}
+
+						if (file_exists($src . '/.thumbnail/720px/' . $file)) {
+							if (!file_exists( $dst . '/.thumbnail')) {
+								mkdir( $dst . '/.thumbnail');
+							}
+							if (!file_exists($dst . '/.thumbnail/720px')) {
+								mkdir( $dst . '/.thumbnail/720px');
+							}
+							copy($src . '/.thumbnail/720px/' . $file, $dst . '/.thumbnail/720px/' . $file);
+						}
 					}
-					else {
-							copy($src . '/' . $file,$dst . '/' . $file);
-					}
+
+					copy($src . '/' . $file,$dst . '/' . $file);
+				}
 			}
 	}
 	closedir($dir);

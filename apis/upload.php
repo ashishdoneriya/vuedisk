@@ -3,6 +3,7 @@
 include_once './base-dir.php';
 
 if (!isSessionActive()) {
+	http_response_code(401);
 	echo '{"status" : "failed", "message" : "Login Required"}';
 	return;
 }
