@@ -13,8 +13,6 @@
 		<link rel="stylesheet" href="/css/theme/index.css">
 		<link rel="stylesheet" href="/fonts/Roboto/roboto.css">
 		<link rel="stylesheet" href="/css/index.css">
-		<link rel="stylesheet" href="/fonts/Roboto/roboto.css">
-		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 		<script src="/js/vue.min.js"></script>
 		<script src="/js/vue-router.min.js"></script>
 		<script src="/js/httpVueLoader.js"></script>
@@ -34,12 +32,12 @@
 						<div slot="header" class="clearfix" style="text-align:center">
 							<span>Login</span>
 						</div>
-						<el-form :label-position="'left'" label-width="80px">
+						<el-form :label-position="'left'" label-width="80px"  @submit.prevent.native>
 							<el-form-item label="Password">
-								<el-input v-model="password" @keyup.enter="login" type="password"></el-input>
+								<el-input v-model="password" @keyup.enter.native="login" type="password"></el-input>
 							</el-form-item>
 							<el-form-item>
-								<el-button type="primary" @click="login">Login</el-button>
+								<el-button type="primary" @click="login" @keyup.enter="login">Login</el-button>
 							</el-form-item>
 						</el-form>
 					</el-card>
@@ -285,6 +283,7 @@
 					},
 
 					login() {
+						console.log('yes');
 						if (!this.password) {
 							this.$message({
 								message: 'Please fill password',
@@ -518,7 +517,10 @@
 								this.currentDir = path;
 								this.tableData = response.data;
 							})
-							.catch(() => {
+							.catch((error) => {
+								if (error.response.data.message == 'Login Required') {
+									this.logout();
+								}
 								this.$message({
 									type: 'error',
 									message: 'Unable to fetch contents of ' + path
