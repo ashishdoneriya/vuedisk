@@ -129,7 +129,7 @@
 								<el-row style="margin-bottom:20px" v-if="totalCurrentFiles > 0">
 									<span style="font-family:Roboto;font-size:18px;font-weight:400;color:#555">Files<span>
 								</el-row>
-								<el-row v-if="totalCurrentFiles > 0">
+								<el-row v-if="totalCurrentFiles > 0" style="display: flex;flex-wrap: wrap;flex-flow: row wrap;justify-content: center;">
 									<img 
 										v-for="row of this.tableDataFinal"
 										v-if="!row.isDir"
