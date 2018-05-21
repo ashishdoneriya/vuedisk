@@ -11,6 +11,9 @@ header("Access-Control-Allow-Methods: POST");
 $data = json_decode(file_get_contents('php://input'), true);
 $dirname = $data['dirname'];
 $parentPath = $data['parentPath'];
+session_start();
+$baseDir = $_SESSION['baseDirectory'];
+
 if (strpos($parentPath, '/') != 0) {
 	$parentPath =  '/' . $parentPath;
 }

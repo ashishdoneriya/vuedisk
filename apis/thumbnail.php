@@ -10,6 +10,8 @@ if (!isSessionActive()) {
 $type = $_GET['type'];
 $name = $_GET['name'];
 $parent = $_GET['parent'];
+session_start();
+$baseDir = $_SESSION['baseDirectory'];
 
 if (strpos($parent, '/') != 0) {
 	$parent =  '/' . $parent;

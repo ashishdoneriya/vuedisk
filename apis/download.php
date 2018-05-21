@@ -8,6 +8,9 @@ if (!isSessionActive()) {
 }
 
 $path = $_GET['path'];
+session_start();
+$baseDir = $_SESSION['baseDirectory'];
+
 if (strpos($path, '/') != 0) {
 	$path =  '/' . $path;
 }

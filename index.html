@@ -33,6 +33,9 @@
 							<span>Login</span>
 						</div>
 						<el-form :label-position="'left'" label-width="80px"  @submit.prevent.native>
+							<el-form-item label="Username">
+								<el-input v-model="username" @keyup.enter.native="login" type="text"></el-input>
+							</el-form-item>
 							<el-form-item label="Password">
 								<el-input v-model="password" @keyup.enter.native="login" type="password"></el-input>
 							</el-form-item>
@@ -90,7 +93,7 @@
 					<el-row type="flex" class="row-bg" justify="center">
 						<el-col :span="24">
 							<el-card v-show="displayMode == 'list'">
-								<el-table ref="multipleTable" :data="tableDataFinal" style="width: 100%" @selection-change="handleSelectionChange" size="medium" highlight-current-row>
+								<el-table ref="multipleTable" :data="tableDataFinal" v-loading="isTableLoading" style="width: 100%" @selection-change="handleSelectionChange" size="medium" highlight-current-row>
 									<el-table-column type="selection" width="55">
 									</el-table-column>
 									<el-table-column label="Name">
@@ -174,6 +177,7 @@
 			new Vue({
 				el: '#vapp',
 				data: {
+					username : '',
 					password: '',
 					tableData: [],
 					multipleSelection: [],
@@ -192,6 +196,7 @@
 					displayMode: 'list',
 					totalCurrentFiles: 0,
 					totalCurrentDirs : 0,
+					isTableLoading : true,
 					isLoggedIn: Cookies.get("LAST_ACTIVITY") ? true : false,
 					imageExtensions: ["jpeg", "jpg", "JPG", "JPEG", "ase", "art", "bmp", "blp", "cd5", "cit", "cpt", "cr2", "cut", "dds", "dib", "djvu", "egt", "exif", "gif", "gpl", "grf", "icns", "ico", "iff", "jng", "jfif", "jp2", "jps", "lbm", "max", "miff", "mng", "msp", "nitf", "ota", "pbm", "pc1", "pc2", "pc3", "pcf", "pcx", "pdn", "pgm", "PI1", "PI2", "PI3", "pict", "pct", "pnm", "pns", "ppm", "psb", "psd", "pdd", "psp", "px", "pxm", "pxr", "qfx", "raw", "rle", "sct", "sgi", "rgb", "int", "bw", "tga", "tiff", "tif", "vtf", "xbm", "xcf", "xpm", "3dv", "amf", "ai", "awg", "cgm", "cdr", "cmx", "dxf", "e2d", "egt", "eps", "fs", "gbr", "odg", "svg", "stl", "vrml", "x3d", "sxd", "v2d", "vnd", "wmf", "emf", "art", "xar", "png", "webp", "jxr", "hdp", "wdp", "cur", "ecw", "iff", "lbm", "liff", "nrrd", "pam", "pcx", "pgf", "sgi", "rgb", "rgba", "bw", "int", "inta", "sid", "ras", "sun", "tga"]
 				},
@@ -283,10 +288,10 @@
 					},
 
 					login() {
-						console.log('yes');
-						if (!this.password) {
+						
+						if (!this.username || !this.password) {
 							this.$message({
-								message: 'Please fill password',
+								message: 'Please fill username and password',
 								type: 'error',
 								center: true
 							});
@@ -294,7 +299,7 @@
 						}
 
 						axios.post('/apis/signin.php', {
-							'password': this.password
+							'username': this.username, 'password': this.password
 						}).then(result => {
 							if (result.data.status == 'success') {
 								Cookies.set('LAST_ACTIVITY', 'youcandeleteit', { expires: 86400 }); // 1 day
@@ -511,11 +516,13 @@
 					},
 
 					openDir(path) {
+						this.isTableLoading = true;
 						window.history.replaceState('', 'File Manager', '?path=' + path);
 						axios.get('/apis/files-list.php?path=' + path)
 							.then((response) => {
 								this.currentDir = path;
 								this.tableData = response.data;
+								this.isTableLoading = false;
 							})
 							.catch((error) => {
 								if (error.response.data.message == 'Login Required') {

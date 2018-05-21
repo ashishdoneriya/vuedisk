@@ -12,6 +12,8 @@ $data = json_decode(file_get_contents('php://input'), true);
 $parentDir = $data['parentDir'];
 $oldName = $data['oldName'];
 $newName = $data['newName'];
+session_start();
+$baseDir = $_SESSION['baseDirectory'];
 
 if (strpos($parentDir, '/') != 0) {
 	$parentDir =  '/' . $parentDir;

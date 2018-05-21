@@ -11,6 +11,9 @@ header("Access-Control-Allow-Methods: POST");
 $data = json_decode(file_get_contents('php://input'), true);
 $parentDir = htmlspecialchars(strip_tags($data['parentDir']));
 $url = $data['url'];
+session_start();
+$baseDir = $_SESSION['baseDirectory'];
+
 $filename = strip_tags($data['filename'];
 if ($filename == null || $filename == '') {
 	$filename = basename($url);

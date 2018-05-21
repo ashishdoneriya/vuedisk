@@ -14,6 +14,8 @@ $sourceDir = $data['sourceDir'];
 $destinationDir = $data['destinationDir'];
 $files = $data['files'];
 $files = json_decode($files, true);
+session_start();
+$baseDir = $_SESSION['baseDirectory'];
 
 if (strpos($sourceDir, '/') != 0) {
 	$sourceDir =  '/' . $sourceDir;

@@ -13,6 +13,8 @@ $parentDir = $data['parentDir'];
 
 $files = $data['files'];
 $files = json_decode($files, true);
+session_start();
+$baseDir = $_SESSION['baseDirectory'];
 
 if (strpos($parentDir, '/') != 0) {
 	$parentDir =  '/' . $parentDir;

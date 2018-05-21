@@ -8,6 +8,30 @@ if (!isSessionActive()) {
 	return;
 }
 
+$parentDir = getParam('parentDir');
+
+if (!ends_with($parentDir, '/')) {
+	$parentDir = $parentDir . '/';
+}
+
+if (strpos($parentDir, '/') != 0) {
+	$parentDir =  '/' . $parentDir;
+}
+
+session_start();
+$baseDir = $_SESSION['baseDirectory'];
+
+$parentDir = $baseDir . $parentDir . '/';
+
+$uploadfilePath = $parentDir . str_replace(' ', ' ', basename($_FILES['file']['name']));
+
+if (copy($_FILES['file']['tmp_name'], $uploadfilePath)) {
+	echo "success";
+} else {
+	echo "error";
+}
+unlink($_FILES['file']['tmp_name']);
+
 // In PHP versions earlier than 4.1.0, $HTTP_POST_FILES should be used instead
 // of $_FILES.
 
@@ -42,26 +66,5 @@ function ends_with($haystack, $needles) {
 	}
 	return false;
 }
-
-$parentDir = getParam('parentDir');
-
-if (!ends_with($parentDir, '/')) {
-	$parentDir = $parentDir . '/';
-}
-
-if (strpos($parentDir, '/') != 0) {
-	$parentDir =  '/' . $parentDir;
-}
-
-$parentDir = $baseDir . $parentDir . '/';
-
-$uploadfilePath = $parentDir . str_replace(' ', ' ', basename($_FILES['file']['name']));
-
-if (copy($_FILES['file']['tmp_name'], $uploadfilePath)) {
-	echo "success";
-} else {
-	echo "error";
-}
-unlink($_FILES['file']['tmp_name']);
 
 ?>
