@@ -46,7 +46,7 @@
 					</el-card>
 				</el-col>
 			</el-row>
-			<el-container class="container" v-bind:style="{maxWidth : pageWidth, marginTop : marginTop}" v-show="isLoggedIn == true">
+			<el-container class="container" v-bind:style="{maxWidth : pageWidth}" v-show="isLoggedIn == true">
 				<el-header class="text-center" style="margin-top:20px;margin-bottom:30px">
 					<h1>File Manager
 						<span style="float:right;cursor: pointer;font-size:14px; font-weight: normal" @click="logout()">Logout</span>
@@ -170,6 +170,23 @@
 					<el-button type="primary" @click="remoteUpload()">Upload</el-button>
 				</span>
 			</el-dialog>
+		<!--	<div style="
+				position:fixed;
+				bottom:0;
+				width:100%;
+				height:40px;
+				padding-top:10px;
+				margin:auto;
+				text-align:center;
+				background: rgba(0, 0, 0, 0.7);
+				z-index:1000;"
+			>
+				<audio controls="controls" style="width:700px;">
+					<source :src="audioSource"/>
+					Your browser does not support the audio element.
+				</audio>
+				<span style="position:absolute;color:#fff;padding-left:30px;top:18px;font-weight:bold;cursor:pointer" title="close">X</span>
+			</div> -->
 		</div>
 		<script>
 			ELEMENT.locale(ELEMENT.lang.en);
@@ -213,18 +230,9 @@
 
 					pageWidth() {
 						if (this.displayMode == 'gallery') {
-							document.body.style.background = '#fff';
-							return '100%';
+							return 'calc(100% - 120px)';
 						}
-						document.body.style.background = '#232323';
 						return '900px';
-					},
-					
-					marginTop() {
-						if (this.displayMode == 'gallery') {
-							return '0px';
-						}
-						return '30px';
 					},
 
 					tableDataFinal() {
