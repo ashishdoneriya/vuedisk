@@ -32,7 +32,7 @@
 						<div slot="header" class="clearfix" style="text-align:center">
 							<span>Login</span>
 						</div>
-						<el-form :label-position="'left'" label-width="80px"  @submit.prevent.native>
+						<el-form :label-position="'left'" label-width="80px" @submit.prevent.native>
 							<el-form-item label="Username">
 								<el-input v-model="username" @keyup.enter.native="login" type="text"></el-input>
 							</el-form-item>
@@ -98,6 +98,11 @@
 									</el-table-column>
 									<el-table-column label="Name">
 										<template slot-scope="scope">
+											<span v-if="!scope.row.isDir" class="fonts" @click="download(scope.row.name)">{{ scope.row.name }}</span>
+											  <el-button
+												v-if="!scope.row.isDir && isImage(scope.row.name)"
+												size="mini"
+												 @click="play(scope.row.name)">Play</el-button>
 											<span v-if="scope.row.isDir" class="fonts" style="font-weight: bold;" @click="openDirFromList(scope.row.name)">{{ scope.row.name }}</span>
 											<span v-if="!scope.row.isDir" class="fonts" @click="download(scope.row.name)">{{ scope.row.name }}</span>
 										</template>
@@ -116,7 +121,8 @@
 							</el-card>
 							<div v-if="displayMode == 'gallery'">
 								<el-row style="margin-bottom:20px" v-if="totalCurrentDirs > 0">
-									<span style="font-family:Roboto;font-size:18px;font-weight:400;color:#555">Folders<span>
+									<span style="font-family:Roboto;font-size:18px;font-weight:400;color:#555">Folders
+										<span>
 								</el-row>
 								<el-row v-if="totalCurrentDirs > 0">
 									<div v-for="row of this.tableDataFinal" @click="openDirFromList(row.name)" style="display: inline-block;margin:10px;cursor:pointer">
@@ -130,16 +136,11 @@
 									</div>
 								</el-row>
 								<el-row style="margin-bottom:20px" v-if="totalCurrentFiles > 0">
-									<span style="font-family:Roboto;font-size:18px;font-weight:400;color:#555">Files<span>
+									<span style="font-family:Roboto;font-size:18px;font-weight:400;color:#555">Files
+										<span>
 								</el-row>
 								<el-row v-if="totalCurrentFiles > 0" style="display: flex;flex-wrap: wrap;flex-flow: row wrap;justify-content: center;">
-									<img 
-										v-for="row of this.tableDataFinal"
-										v-if="!row.isDir"
-										v-lazy="'/apis/thumbnail.php?type=small&name=' + row.name + '&parent=' + currentDir"
-										v-img="{group :  'gallery', title: row.name, src : '/apis/thumbnail.php?type=large&name=' + row.name + '&parent=' + currentDir}" 
-										style="height:320px;margin: 5px;float:left"
-										:title="row.name">
+									<img v-for="row of this.tableDataFinal" v-if="!row.isDir" v-lazy="'/apis/thumbnail.php?type=small&name=' + row.name + '&parent=' + currentDir" v-img="{group :  'gallery', title: row.name, src : '/apis/thumbnail.php?type=large&name=' + row.name + '&parent=' + currentDir}" style="height:320px;margin: 5px;float:left" :title="row.name">
 								</el-row>
 							</div>
 						</el-col>
@@ -170,23 +171,23 @@
 					<el-button type="primary" @click="remoteUpload()">Upload</el-button>
 				</span>
 			</el-dialog>
-		<!--	<div style="
+			<div v-show="displayAudioPlayer" style="
 				position:fixed;
 				bottom:0;
 				width:100%;
-				height:40px;
+				height:45px;
 				padding-top:10px;
 				margin:auto;
 				text-align:center;
-				background: rgba(0, 0, 0, 0.7);
+				background: rgba(0, 0, 0, 0.1);
 				z-index:1000;"
 			>
 				<audio controls="controls" style="width:700px;">
 					<source :src="audioSource"/>
 					Your browser does not support the audio element.
 				</audio>
-				<span style="position:absolute;color:#fff;padding-left:30px;top:18px;font-weight:bold;cursor:pointer" title="close">X</span>
-			</div> -->
+				<span style="position:absolute;color:black;padding-left:30px;top:18px;font-weight:bold;cursor:pointer" title="close">X</span>
+			</div>
 		</div>
 		<script>
 			ELEMENT.locale(ELEMENT.lang.en);
@@ -194,27 +195,30 @@
 			new Vue({
 				el: '#vapp',
 				data: {
-					username : '',
-					password: '',
-					tableData: [],
-					multipleSelection: [],
+					audioSource : '',
 					currentDir: '/',
+					displayAudioPlayer : false,
+					displayMode: 'list',
 					hiddenFiles: false,
-					remoteUploadDialog: false,
+					isLoggedIn: Cookies.get("LAST_ACTIVITY") ? true : false,
+					isTableLoading: true,
 					localFileUploadDialog: false,
-					remoteUrl: '',
-					remoteUrlName: '',
-					uploadFilesList: [],
+					multipleSelection: [],
 					operation: {
 						type: '',
 						parentPath: '',
 						selectedFiles: ''
 					},
-					displayMode: 'list',
+					password: '',
+					remoteUploadDialog: false,
+					remoteUrl: '',
+					remoteUrlName: '',
+					tableData: [],
+					totalCurrentDirs: 0,
 					totalCurrentFiles: 0,
-					totalCurrentDirs : 0,
-					isTableLoading : true,
-					isLoggedIn: Cookies.get("LAST_ACTIVITY") ? true : false,
+					uploadFilesList: [],
+					username: '',
+					audioExtensions : ['mp3'],
 					imageExtensions: ["jpeg", "jpg", "JPG", "JPEG", "ase", "art", "bmp", "blp", "cd5", "cit", "cpt", "cr2", "cut", "dds", "dib", "djvu", "egt", "exif", "gif", "gpl", "grf", "icns", "ico", "iff", "jng", "jfif", "jp2", "jps", "lbm", "max", "miff", "mng", "msp", "nitf", "ota", "pbm", "pc1", "pc2", "pc3", "pcf", "pcx", "pdn", "pgm", "PI1", "PI2", "PI3", "pict", "pct", "pnm", "pns", "ppm", "psb", "psd", "pdd", "psp", "px", "pxm", "pxr", "qfx", "raw", "rle", "sct", "sgi", "rgb", "int", "bw", "tga", "tiff", "tif", "vtf", "xbm", "xcf", "xpm", "3dv", "amf", "ai", "awg", "cgm", "cdr", "cmx", "dxf", "e2d", "egt", "eps", "fs", "gbr", "odg", "svg", "stl", "vrml", "x3d", "sxd", "v2d", "vnd", "wmf", "emf", "art", "xar", "png", "webp", "jxr", "hdp", "wdp", "cur", "ecw", "iff", "lbm", "liff", "nrrd", "pam", "pcx", "pgf", "sgi", "rgb", "rgba", "bw", "int", "inta", "sid", "ras", "sun", "tga"]
 				},
 				computed: {
@@ -282,6 +286,10 @@
 					isImage(name) {
 						return this.imageExtensions.indexOf(name.substring(name.lastIndexOf('.') + 1)) != -1;
 					},
+					
+					isAudio(name) {
+						return this.audioExtensions.indexOf(name.substring(name.lastIndexOf('.') + 1)) != -1;
+					},
 
 					extractUrlParam() {
 						var paramsPath = location.search.substring(1);
@@ -303,7 +311,7 @@
 					},
 
 					login() {
-						
+
 						if (!this.username || !this.password) {
 							this.$message({
 								message: 'Please fill username and password',
