@@ -2,7 +2,8 @@
 <?php
 include_once './base-dir.php';
 
-if (!isSessionActive()) {
+$baseDir = getBaseDirectory();
+if ($baseDir == null) {
 	http_response_code(401);
 	echo '{"status" : "failed", "message" : "Login Required"}';
 	return;
@@ -17,9 +18,6 @@ if (!ends_with($parentDir, '/')) {
 if (strpos($parentDir, '/') != 0) {
 	$parentDir =  '/' . $parentDir;
 }
-
-session_start();
-$baseDir = $_SESSION['baseDirectory'];
 
 $parentDir = $baseDir . $parentDir . '/';
 

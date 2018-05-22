@@ -46,7 +46,7 @@
 					</el-card>
 				</el-col>
 			</el-row>
-			<el-container class="container" v-bind:style="{maxWidth : pageWidth}" v-show="isLoggedIn == true">
+			<el-container class="container" v-bind:style="{maxWidth : pageWidth, marginTop : marginTop}" v-show="isLoggedIn == true">
 				<el-header class="text-center" style="margin-top:20px;margin-bottom:30px">
 					<h1>File Manager
 						<span style="float:right;cursor: pointer;font-size:14px; font-weight: normal" @click="logout()">Logout</span>
@@ -219,6 +219,13 @@
 						document.body.style.background = '#232323';
 						return '900px';
 					},
+					
+					marginTop() {
+						if (this.displayMode == 'gallery') {
+							return '0px';
+						}
+						return '30px';
+					},
 
 					tableDataFinal() {
 						this.totalCurrentFiles = 0;
@@ -323,7 +330,10 @@
 					},
 
 					logout() {
-						window.history.replaceState('', 'File Manager', '');
+						window.history.replaceState('', 'File Manager', '?');
+						this.currentDir = '/';
+						this.tableData = [];
+						this.isTableLoading = false;
 						axios.post('/apis/signout.php');
 						Cookies.expire("LAST_ACTIVITY");
 						this.isLoggedIn = false;
@@ -530,7 +540,7 @@
 								}
 								this.$message({
 									type: 'error',
-									message: 'Unable to fetch contents of ' + path
+									message: error.response.data.message
 								});
 							});
 					},

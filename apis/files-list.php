@@ -1,15 +1,13 @@
 <?php
 include_once './base-dir.php';
 
-if (!isSessionActive()) {
+$baseDir = getBaseDirectory();
+if ($baseDir == null) {
 	http_response_code(401);
 	echo '{"status" : "failed", "message" : "Login Required"}';
 	return;
 }
-
 $path =  $_GET['path'];
-session_start();
-$baseDir = $_SESSION['baseDirectory'];
 
 if (strpos($path, '/') != 0) {
 	$path =  '/' . $path;
@@ -18,6 +16,12 @@ $path = $baseDir . $path;
 
 if (strpos($path, '/./') != false || strpos($path, '..') != false) {
 	echo "error";
+	return;
+}
+
+if (!file_exists($path)) {
+	http_response_code(406);
+	echo '{"status" : "failed", "message" : "No such file or directory exists"}';
 	return;
 }
 

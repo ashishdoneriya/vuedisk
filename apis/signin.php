@@ -8,14 +8,15 @@ include_once './base-dir.php';
 $data = json_decode(file_get_contents('php://input'), TRUE);
 $username =$data['username'];
 $password =$data['password'];
-session_start();
-$baseDir = $_SESSION['baseDirectory'];
 
-if (!$password) {
+
+if (!$password || !$username) {
 	echo '{"status" : "failed", "message" : "Please enter valid information"}';
 	return;
 }
-$baseDirectory = getBaseDirectory($username, $password);
+
+$baseDirectory = areCredentialsValid($username, $password);
+
 if ($baseDirectory != null) {
 	session_start();
 	$_SESSION['LAST_ACTIVITY'] = time();

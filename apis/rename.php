@@ -1,7 +1,8 @@
 <?php
 include_once './base-dir.php';
 
-if (!isSessionActive()) {
+$baseDir = getBaseDirectory();
+if ($baseDir == null) {
 	http_response_code(401);
 	echo '{"status" : "failed", "message" : "Login Required"}';
 	return;
@@ -12,8 +13,6 @@ $data = json_decode(file_get_contents('php://input'), true);
 $parentDir = $data['parentDir'];
 $oldName = $data['oldName'];
 $newName = $data['newName'];
-session_start();
-$baseDir = $_SESSION['baseDirectory'];
 
 if (strpos($parentDir, '/') != 0) {
 	$parentDir =  '/' . $parentDir;

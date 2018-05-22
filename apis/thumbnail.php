@@ -1,7 +1,9 @@
 <?php
 include_once './base-dir.php';
 ini_set('memory_limit', '-1');
-if (!isSessionActive()) {
+
+$baseDir = getBaseDirectory();
+if ($baseDir == null) {
 	http_response_code(401);
 	echo '{"status" : "failed", "message" : "Login Required"}';
 	return;
@@ -10,8 +12,6 @@ if (!isSessionActive()) {
 $type = $_GET['type'];
 $name = $_GET['name'];
 $parent = $_GET['parent'];
-session_start();
-$baseDir = $_SESSION['baseDirectory'];
 
 if (strpos($parent, '/') != 0) {
 	$parent =  '/' . $parent;

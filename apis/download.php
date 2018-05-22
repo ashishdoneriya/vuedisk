@@ -1,15 +1,14 @@
 <?php
 include_once './base-dir.php';
 
-if (!isSessionActive()) {
+$baseDir = getBaseDirectory();
+if ($baseDir == null) {
 	http_response_code(401);
 	echo '{"status" : "failed", "message" : "Login Required"}';
 	return;
 }
 
 $path = $_GET['path'];
-session_start();
-$baseDir = $_SESSION['baseDirectory'];
 
 if (strpos($path, '/') != 0) {
 	$path =  '/' . $path;

@@ -5,31 +5,36 @@
 	
 $credentials_list = array();
 array_push($credentials_list, array('username' => 'ashish', 'password' => 'pass@123', 'baseDirectory' => '/home/ashish'));
-array_push($credentials_list, array('username' => 'root', 'password' => 'root', 'baseDirectory' => '/'));
 array_push($credentials_list, array('username' => 'user2', 'password' => 'pass2', 'baseDirectory' => '/path-to-a-directory-1'));
 
-function getBaseDirectory($username, $password) {
+
+/**
+ *	Return the path of base directory if credentials are valid otherwise null 
+ */
+function areCredentialsValid($username, $password) {
+	global $credentials_list;
 	foreach ($credentials_list as $credentials) {
 		if ($credentials['username'] == $username) {
 			if ($credentials['password'] == $password) {
 				return $credentials['baseDirectory'];
-			} else {
-				return false;
 			}
+			break;
 		}
 	}
-	return false;
+	return null;
 }
 
-
-function isSessionActive() {
+/**
+ * Returns the path of base directory saved in the session 
+ */
+function getBaseDirectory() {
 	session_start();
 	if (isset($_SESSION['LAST_ACTIVITY']) && ($_SESSION['LAST_ACTIVITY'] + 86400) > time()) {
 		$_SESSION['LAST_ACTIVITY'] = time();
-		return true;
+		return $_SESSION['baseDirectory'];
 	} else {
 		// remove all session variables
-	session_unset();
+		session_unset();
 		// If it's desired to kill the session, also delete the session cookie.
 		// Note: This will destroy the session, and not just the session data!
 		if (ini_get("session.use_cookies")) {
@@ -41,7 +46,7 @@ function isSessionActive() {
 		}
 		// destroy the session
 		session_destroy();
-		return false;
+		return null;
 	}
 }
 ?>

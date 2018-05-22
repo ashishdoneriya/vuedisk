@@ -1,7 +1,8 @@
 <?php
 include_once './base-dir.php';
 
-if (!isSessionActive()) {
+$baseDir = getBaseDirectory();
+if ($baseDir == null) {
 	http_response_code(401);
 	echo '{"status" : "failed", "message" : "Login Required"}';
 	return;
@@ -14,8 +15,6 @@ $sourceDir = $data['sourceDir'];
 $destinationDir = $data['destinationDir'];
 $files = $data['files'];
 $files = json_decode($files, true);
-session_start();
-$baseDir = $_SESSION['baseDirectory'];
 
 if (strpos($sourceDir, '/') != 0) {
 	$sourceDir =  '/' . $sourceDir;
