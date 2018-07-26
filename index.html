@@ -98,17 +98,15 @@
 									</el-table-column>
 									<el-table-column label="Name">
 										<template slot-scope="scope">
-											<span v-if="!scope.row.isDir" class="fonts" @click="download(scope.row.name)">{{ scope.row.name }}</span>
-											  <el-button
-												v-if="!scope.row.isDir && isImage(scope.row.name)"
-												size="mini"
-												 @click="play(scope.row.name)">Play</el-button>
-											<span v-if="scope.row.isDir" class="fonts" style="font-weight: bold;" @click="openDirFromList(scope.row.name)">{{ scope.row.name }}</span>
+											<span v-if="scope.row.isDir" class="fonts" style="font-weight: 500;" @click="openDirFromList(scope.row.name)">{{ scope.row.name }}</span>
+
 											<span v-if="!scope.row.isDir" class="fonts" @click="download(scope.row.name)">{{ scope.row.name }}</span>
 										</template>
 									</el-table-column>
-									<el-table-column align="right">
+									<el-table-column align="right" class="hidden-md-and-up">
 										<template slot-scope="scope">
+											<el-button v-if="!scope.row.isDir && isAudio(scope.row.name)" size="mini" @click="playAudio(scope.row.name)" style="margin-right:10px">Play</el-button>
+											<el-button v-if="!scope.row.isDir && isVideo(scope.row.name)" size="mini" @click="playVideo(scope.row.name)" style="margin-right:10px">Play</el-button>
 											<span v-if="!scope.row.isDir" style="margin-right: 10px">{{ scope.row.size }}</span>
 										</template>
 									</el-table-column>
@@ -171,7 +169,17 @@
 					<el-button type="primary" @click="remoteUpload()">Upload</el-button>
 				</span>
 			</el-dialog>
-			<div v-show="displayAudioPlayer" style="
+			<el-dialog :visible.sync="displayVideoPlayer">
+				<div style="width:100%;margin:0 auto;text-align:center">
+					<video width="400" controls ref="videoPlayer">
+						<source :src="videoSource" type="video/mp4"> Your browser does not support HTML5 video.
+					</video>
+				</div>
+				<span slot="footer" class="dialog-footer">
+					<el-button type="primary" @click="closeVideoPlayer()">Close</el-button>
+				</span>
+			</el-dialog>
+			<div v-if="displayAudioPlayer" style="
 				position:fixed;
 				bottom:0;
 				width:100%;
@@ -180,13 +188,11 @@
 				margin:auto;
 				text-align:center;
 				background: rgba(0, 0, 0, 0.1);
-				z-index:1000;"
-			>
-				<audio controls="controls" style="width:700px;">
-					<source :src="audioSource"/>
-					Your browser does not support the audio element.
+				z-index:1000;">
+				<audio controls style="width:700px;" ref="audioPlayer">
+					<source :src="audioSource" /> Your browser does not support the audio element.
 				</audio>
-				<span style="position:absolute;color:black;padding-left:30px;top:18px;font-weight:bold;cursor:pointer" title="close">X</span>
+				<span style="position:absolute;color:black;padding-left:30px;top:18px;font-weight:bold;cursor:pointer" title="close" @click="closeAudioPlayer()">X</span>
 			</div>
 		</div>
 		<script>
@@ -195,10 +201,11 @@
 			new Vue({
 				el: '#vapp',
 				data: {
-					audioSource : '',
+					audioSource: '',
 					currentDir: '/',
-					displayAudioPlayer : false,
+					displayAudioPlayer: false,
 					displayMode: 'list',
+					displayVideoPlayer: false,
 					hiddenFiles: false,
 					isLoggedIn: Cookies.get("LAST_ACTIVITY") ? true : false,
 					isTableLoading: true,
@@ -218,8 +225,18 @@
 					totalCurrentFiles: 0,
 					uploadFilesList: [],
 					username: '',
-					audioExtensions : ['mp3'],
+					videoSource: '',
+					audioExtensions: ['mp3'],
+					videoExtensions: ['mp4'],
 					imageExtensions: ["jpeg", "jpg", "JPG", "JPEG", "ase", "art", "bmp", "blp", "cd5", "cit", "cpt", "cr2", "cut", "dds", "dib", "djvu", "egt", "exif", "gif", "gpl", "grf", "icns", "ico", "iff", "jng", "jfif", "jp2", "jps", "lbm", "max", "miff", "mng", "msp", "nitf", "ota", "pbm", "pc1", "pc2", "pc3", "pcf", "pcx", "pdn", "pgm", "PI1", "PI2", "PI3", "pict", "pct", "pnm", "pns", "ppm", "psb", "psd", "pdd", "psp", "px", "pxm", "pxr", "qfx", "raw", "rle", "sct", "sgi", "rgb", "int", "bw", "tga", "tiff", "tif", "vtf", "xbm", "xcf", "xpm", "3dv", "amf", "ai", "awg", "cgm", "cdr", "cmx", "dxf", "e2d", "egt", "eps", "fs", "gbr", "odg", "svg", "stl", "vrml", "x3d", "sxd", "v2d", "vnd", "wmf", "emf", "art", "xar", "png", "webp", "jxr", "hdp", "wdp", "cur", "ecw", "iff", "lbm", "liff", "nrrd", "pam", "pcx", "pgf", "sgi", "rgb", "rgba", "bw", "int", "inta", "sid", "ras", "sun", "tga"]
+				},
+				watch: {
+					audioSource() {
+						this.$refs['audioPlayer'].load();
+					},
+					videoSource() {
+						this.$refs['videoPlayer'].load();
+					}
 				},
 				computed: {
 
@@ -283,12 +300,38 @@
 
 				methods: {
 
+					playAudio(name) {
+						this.displayAudioPlayer = true;
+						this.audioSource = '/apis/download.php?path=' + (this.currentDir == '/' ? '/' : this.currentDir + '/') + name;
+					},
+
+					playVideo(name) {
+						this.displayVidioPlayer = true;
+						this.videoSource = '/apis/download.php?path=' + (this.currentDir == '/' ? '/' : this.currentDir + '/') + name;
+					},
+
+					closeAudioPlayer() {
+						this.displayAudioPlayer = false;
+						this.audioSource = '';
+						this.$refs.audioPlayer.load();
+					},
+
+					closeVideoPlayer() {
+						this.displayVideoPlayer = false;
+						this.videoSource = '';
+						this.$refs.videoPlayer.load();
+					},
+
 					isImage(name) {
 						return this.imageExtensions.indexOf(name.substring(name.lastIndexOf('.') + 1)) != -1;
 					},
-					
+
 					isAudio(name) {
 						return this.audioExtensions.indexOf(name.substring(name.lastIndexOf('.') + 1)) != -1;
+					},
+
+					isVideo(name) {
+						return this.videoExtensions.indexOf(name.substring(name.lastIndexOf('.') + 1)) != -1;
 					},
 
 					extractUrlParam() {
