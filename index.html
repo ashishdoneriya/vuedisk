@@ -26,7 +26,7 @@
 
 	<body>
 		<div id="vapp">
-			<el-row v-show="isLoggedIn == false" type="flex" class="row-bg" justify="center" style="margin-top:100px">
+			<el-row v-cloak v-show="isLoggedIn == false" type="flex" class="row-bg" justify="center" style="margin-top:100px">
 				<el-col :xs="24" :sm="16" :md="12" :lg="8">
 					<el-card class="box-card">
 						<div slot="header" class="clearfix" style="text-align:center">
@@ -46,7 +46,7 @@
 					</el-card>
 				</el-col>
 			</el-row>
-			<el-container class="container" v-bind:style="{maxWidth : pageWidth}" v-show="isLoggedIn == true">
+			<el-container v-cloak class="container" v-bind:style="{maxWidth : pageWidth}" v-show="isLoggedIn == true">
 				<el-header class="text-center" style="margin-top:20px;margin-bottom:30px">
 					<h1>File Manager
 						<span style="float:right;cursor: pointer;font-size:14px; font-weight: normal" @click="logout()">Logout</span>
@@ -145,7 +145,7 @@
 					</el-row>
 				</el-main>
 			</el-container>
-			<el-dialog title="File(s) Upload" :visible.sync="localFileUploadDialog">
+			<el-dialog v-cloak title="File(s) Upload" :visible.sync="localFileUploadDialog">
 				<el-form>
 					<el-upload :action="'/apis/upload.php?parentDir=' + currentDir" multiple :file-list="uploadFilesList">
 						<el-button size="small" type="primary">Add Files</el-button>
@@ -155,7 +155,7 @@
 					<el-button type="primary" @click="closeLocalUploadDialog()">Close</el-button>
 				</span>
 			</el-dialog>
-			<el-dialog title="Remote File Upload" :visible.sync="remoteUploadDialog">
+			<el-dialog v-cloak title="Remote File Upload" :visible.sync="remoteUploadDialog">
 				<el-form>
 					<el-form-item label="File Url" label-width="150">
 						<el-input v-model="remoteUrl" auto-complete="off"></el-input>
@@ -169,7 +169,7 @@
 					<el-button type="primary" @click="remoteUpload()">Upload</el-button>
 				</span>
 			</el-dialog>
-			<el-dialog :visible.sync="displayVideoPlayer">
+			<el-dialog v-cloak :visible.sync="displayVideoPlayer">
 				<div style="width:100%;margin:0 auto;text-align:center">
 					<video width="400" controls ref="videoPlayer">
 						<source :src="videoSource" type="video/mp4"> Your browser does not support HTML5 video.
@@ -203,6 +203,7 @@
 				data: {
 					audioSource: '',
 					currentDir: '/',
+					dirBeforeLogout: '',
 					displayAudioPlayer: false,
 					displayMode: 'list',
 					displayVideoPlayer: false,
@@ -306,7 +307,7 @@
 					},
 
 					playVideo(name) {
-						this.displayVidioPlayer = true;
+						this.displayVideoPlayer = true;
 						this.videoSource = '/apis/download.php?path=' + (this.currentDir == '/' ? '/' : this.currentDir + '/') + name;
 					},
 
@@ -370,6 +371,9 @@
 							if (result.data.status == 'success') {
 								Cookies.set('LAST_ACTIVITY', 'youcandeleteit', { expires: 86400 }); // 1 day
 								this.isLoggedIn = true;
+								if (this.dirBeforeLogout) {
+									this.currentDir =	this.dirBeforeLogout;
+								}
 								this.refresh();
 							} else {
 								this.password = '';
@@ -389,6 +393,7 @@
 					},
 
 					logout() {
+						this.dirBeforeLogout = '';
 						window.history.replaceState('', 'File Manager', '?');
 						this.currentDir = '/';
 						this.tableData = [];
@@ -596,11 +601,13 @@
 							.catch((error) => {
 								if (error.response.data.message == 'Login Required') {
 									this.logout();
+									this.dirBeforeLogout = path;
+								} else {
+									this.$message({
+										type: 'error',
+										message: error.response.data.message
+									});
 								}
-								this.$message({
-									type: 'error',
-									message: error.response.data.message
-								});
 							});
 					},
 
