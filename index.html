@@ -26,7 +26,9 @@
 
 	<body>
 		<div id="vapp">
-			<el-row v-cloak v-show="isLoggedIn == false" type="flex" class="row-bg" justify="center" style="margin-top:100px">
+			<!-- First time loader -->
+			<div v-show="firstTimeOpened" class="spinner"></div>
+			<el-row v-cloak v-show="!firstTimeOpened && isLoggedIn == false" type="flex" class="row-bg" justify="center" style="margin-top:100px">
 				<el-col :xs="24" :sm="16" :md="12" :lg="8">
 					<el-card class="box-card">
 						<div slot="header" class="clearfix" style="text-align:center">
@@ -46,7 +48,7 @@
 					</el-card>
 				</el-col>
 			</el-row>
-			<el-container v-cloak class="container" v-bind:style="{maxWidth : pageWidth}" v-show="isLoggedIn == true">
+			<el-container v-cloak class="container" v-bind:style="{maxWidth : pageWidth}" v-show="!firstTimeOpened && isLoggedIn == true">
 				<el-header class="text-center" style="margin-top:20px;margin-bottom:30px">
 					<h1>File Manager
 						<span style="float:right;cursor: pointer;font-size:14px; font-weight: normal" @click="logout()">Logout</span>
@@ -179,7 +181,7 @@
 					<el-button type="primary" @click="closeVideoPlayer()">Close</el-button>
 				</span>
 			</el-dialog>
-			<div v-if="displayAudioPlayer" style="
+			<div v-cloak v-if="displayAudioPlayer && !firstTimeOpened" style="
 				position:fixed;
 				bottom:0;
 				width:100%;
@@ -207,6 +209,7 @@
 					displayAudioPlayer: false,
 					displayMode: 'list',
 					displayVideoPlayer: false,
+					firstTimeOpened: true,
 					hiddenFiles: false,
 					isLoggedIn: Cookies.get("LAST_ACTIVITY") ? true : false,
 					isTableLoading: true,
@@ -293,6 +296,7 @@
 					this.extractUrlParam();
 					this.isLoggedIn = Cookies.get("LAST_ACTIVITY") ? true : false;
 					if (!this.isLoggedIn) {
+						this.firstTimeOpened = false;
 						return;
 					}
 					this.isLoggedIn = true;
@@ -401,6 +405,7 @@
 						axios.post('/apis/signout.php');
 						Cookies.expire("LAST_ACTIVITY");
 						this.isLoggedIn = false;
+						this.firstTimeOpened = false;
 					},
 
 					openLocalUploadDialog() {
@@ -597,6 +602,7 @@
 								this.currentDir = path;
 								this.tableData = response.data;
 								this.isTableLoading = false;
+								this.firstTimeOpened = false;
 							})
 							.catch((error) => {
 								if (error.response.data.message == 'Login Required') {
