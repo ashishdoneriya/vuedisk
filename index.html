@@ -14,8 +14,6 @@
 		<link rel="stylesheet" href="/fonts/Roboto/roboto.css">
 		<link rel="stylesheet" href="/css/index.css">
 		<script src="/js/vue.min.js"></script>
-		<script src="/js/vue-router.min.js"></script>
-		<script src="/js/httpVueLoader.js"></script>
 		<script src="/js/elementui.min.js"></script>
 		<script src="/js/element.en.js"></script>
 		<script src="/js/axios.min.js"></script>
@@ -140,7 +138,7 @@
 										<span>
 								</el-row>
 								<el-row v-if="totalCurrentFiles > 0" style="display: flex;flex-wrap: wrap;flex-flow: row wrap;justify-content: center;">
-									<img v-for="row of this.tableDataFinal" v-if="!row.isDir" v-lazy="'/apis/thumbnail.php?type=small&name=' + row.name + '&parent=' + currentDir" v-img="{group :  'gallery', title: row.name, src : '/apis/thumbnail.php?type=large&name=' + row.name + '&parent=' + currentDir}" style="height:320px;margin: 5px;float:left" :title="row.name">
+									<img v-for="row of this.tableDataFinal" v-if="!row.isDir" v-lazy="'/apis/thumbnail.php?type=small&name=' + row.name + '&parent=' + currentDir" v-img="{group :  'gallery', title: row.name, src : '/apis/thumbnail.php?type=large&name=' + row.name + '&parent=' + currentDir, sourceButton: 'true', sourceButtonDownloadLink: '/apis/download.php?path=' + (currentDir == '/' ? '/' : currentDir + '/') + row.name}" style="height:320px;margin: 5px;float:left" :title="row.name">
 								</el-row>
 							</div>
 						</el-col>
@@ -376,7 +374,7 @@
 								Cookies.set('LAST_ACTIVITY', 'youcandeleteit', { expires: 86400 }); // 1 day
 								this.isLoggedIn = true;
 								if (this.dirBeforeLogout) {
-									this.currentDir =	this.dirBeforeLogout;
+									this.currentDir = this.dirBeforeLogout;
 								}
 								this.refresh();
 							} else {
