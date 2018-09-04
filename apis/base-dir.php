@@ -1,8 +1,6 @@
 <?php
-	$baseDir = "/home/impadmin";
-	$globalPassword = "pass@123";
-	// Note : don't add '/' at the end
-	
+
+// Note : don't add '/' at the end
 $credentials_list = array();
 array_push($credentials_list, array('username' => 'ashish', 'password' => 'pass@123', 'baseDirectory' => '/home/ashish'));
 array_push($credentials_list, array('username' => 'user2', 'password' => 'pass2', 'baseDirectory' => '/path-to-a-directory-1'));
