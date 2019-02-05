@@ -138,7 +138,7 @@
 										<span>
 								</el-row>
 								<el-row v-if="totalCurrentFiles > 0" style="display: flex;flex-wrap: wrap;flex-flow: row wrap;justify-content: center;">
-									<img v-for="row of this.tableDataFinal" v-if="!row.isDir" v-lazy="'/apis/thumbnail.php?type=small&name=' + row.name + '&parent=' + currentDir" v-img="{group :  'gallery', title: row.name, src : '/apis/thumbnail.php?type=large&name=' + row.name + '&parent=' + currentDir, sourceButton: 'true', sourceButtonDownloadLink: '/apis/download.php?path=' + (currentDir == '/' ? '/' : currentDir + '/') + row.name}" style="height:320px;margin: 5px;float:left" :title="row.name">
+									<img v-for="row of this.tableDataFinal" v-if="!row.isDir" v-lazy="'/apis/thumbnail.php?type=small&name=' + row.name + '&parent=' + encodeURIComponent(currentDir)" v-img="{group :  'gallery', title: row.name, src : '/apis/thumbnail.php?type=large&name=' + row.name + '&parent=' + encodeURIComponent(currentDir), sourceButton: 'true', sourceButtonDownloadLink: '/apis/download.php?path=' + (currentDir == '/' ? '/' : encodeURIComponent(currentDir) + '/') + row.name}" style="height:320px;margin: 5px;float:left" :title="row.name">
 								</el-row>
 							</div>
 						</el-col>
@@ -342,7 +342,7 @@
 						if (paramsPath) {
 							var parameters = paramsPath.split("&");
 							if (parameters.length > 0) {
-								var firstParam = parameters[0];
+								var firstParam = paramsPath;
 								if (firstParam.indexOf('=') != -1) {
 									firstParamVal = firstParam.split('=')[1];
 									if (firstParamVal) {
