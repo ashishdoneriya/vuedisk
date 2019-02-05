@@ -1,4 +1,3 @@
-
 <?php
 
 header("Access-Control-Allow-Methods: POST");

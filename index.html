@@ -305,12 +305,12 @@
 
 					playAudio(name) {
 						this.displayAudioPlayer = true;
-						this.audioSource = '/apis/download.php?path=' + (this.currentDir == '/' ? '/' : this.currentDir + '/') + name;
+						this.audioSource = '/apis/download.php?path=' + (this.currentDir == '/' ? '/' : encodeURIComponent(this.currentDir) + '/') + name;
 					},
 
 					playVideo(name) {
 						this.displayVideoPlayer = true;
-						this.videoSource = '/apis/download.php?path=' + (this.currentDir == '/' ? '/' : this.currentDir + '/') + name;
+						this.videoSource = '/apis/download.php?path=' + (this.currentDir == '/' ? '/' : encodeURIComponent(this.currentDir) + '/') + name;
 					},
 
 					closeAudioPlayer() {
