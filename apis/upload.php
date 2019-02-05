@@ -23,12 +23,13 @@ $parentDir = $baseDir . $parentDir . '/';
 
 $uploadfilePath = $parentDir . str_replace(' ', ' ', basename($_FILES['file']['name']));
 
-if (copy($_FILES['file']['tmp_name'], $uploadfilePath)) {
+if (rename($_FILES['file']['tmp_name'], $uploadfilePath)) {
 	echo "success";
 } else {
 	echo "error";
 }
-unlink($_FILES['file']['tmp_name']);
+//unlink($_FILES['file']['tmp_name']);
+
 
 // In PHP versions earlier than 4.1.0, $HTTP_POST_FILES should be used instead
 // of $_FILES.

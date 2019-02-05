@@ -147,7 +147,7 @@
 			</el-container>
 			<el-dialog v-cloak title="File(s) Upload" :visible.sync="localFileUploadDialog">
 				<el-form>
-					<el-upload :action="'/apis/upload.php?parentDir=' + currentDir" multiple :file-list="uploadFilesList">
+					<el-upload :action="'/apis/upload.php?parentDir=' + encodeURIComponent(currentDir)" multiple :file-list="uploadFilesList">
 						<el-button size="small" type="primary">Add Files</el-button>
 					</el-upload>
 				</el-form>
@@ -595,7 +595,7 @@
 					openDir(path) {
 						this.isTableLoading = true;
 						window.history.replaceState('', 'File Manager', '?path=' + path);
-						axios.get('/apis/files-list.php?path=' + path)
+						axios.get('/apis/files-list.php?path=' + encodeURIComponent(path))
 							.then((response) => {
 								this.currentDir = path;
 								this.tableData = response.data;
@@ -620,7 +620,7 @@
 					},
 
 					download(name) {
-						document.location = '/apis/download.php?path=' + (this.currentDir == '/' ? '/' : this.currentDir + '/') + name;
+						document.location = '/apis/download.php?path=' + encodeURIComponent((this.currentDir == '/' ? '/' : this.currentDir + '/') + name);
 					}
 				}
 			});
