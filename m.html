@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet">
+		<link href="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.min.css" rel="stylesheet">
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.js"></script>
+		<script src="/js/elementui.min.js"></script>
+		<script src="/js/element.en.js"></script>
+		<script src="/js/axios.min.js"></script>
+		<script src="/js/cookies.min.js"></script>
+		<script src="/js/vue-lazyload.js"></script>
+		<script src="/js/v-img.min.js"></script>
+	</head>
+
+	<body>
+		<div id="vapp">
+			<v-app v-cloak v-show="!firstTimeOpened && isLoggedIn == false">
+				<v-content>
+					<v-container fluid fill-height>
+						<v-layout align-center justify-center>
+							<v-flex xs12 sm8 md4>
+								<v-card class="elevation-12">
+									<v-toolbar dark color="primary">
+										<v-toolbar-title>Login</v-toolbar-title>
+										<v-spacer></v-spacer>
+									</v-toolbar>
+									<v-card-text>
+										<v-form>
+											<v-text-field v-model="username" @keyup.enter.native="login" prepend-icon="person" name="login" label="Login" type="text"></v-text-field>
+											<v-text-field v-model="password" @keyup.enter.native="login" id="password" prepend-icon="lock" name="password" label="Password" type="password"></v-text-field>
+										</v-form>
+									</v-card-text>
+									<v-card-actions>
+										<v-spacer></v-spacer>
+										<v-btn @click="login" @keyup.enter="login" color="primary">Login</v-btn>
+									</v-card-actions>
+								</v-card>
+							</v-flex>
+						</v-layout>
+					</v-container>
+				</v-content>
+			</v-app>
+			<v-app v-cloak v-show="!firstTimeOpened && isLoggedIn == true">
+				<v-layout row>
+					<v-flex xs12 sm6 offset-sm3>
+						<v-card>
+							<v-toolbar color="light-blue" dark>
+								<v-toolbar-side-icon></v-toolbar-side-icon>
+
+								<v-toolbar-title>My files</v-toolbar-title>
+
+								<v-spacer></v-spacer>
+
+								<v-btn icon>
+									<v-icon>add</v-icon>
+								</v-btn>
+								<v-btn icon>
+									<v-icon>search</v-icon>
+								</v-btn>
+
+								<v-btn icon>
+									<v-icon>view_module</v-icon>
+								</v-btn>
+							</v-toolbar>
+
+							<v-list two-line subheader>
+								<v-subheader v-if="totalCurrentDirs > 0" inset>Folders</v-subheader>
+
+								<v-list-tile v-for="row of this.tableDataFinal" :key="row.name" v-if="row.isDir" avatar @click="">
+									<v-list-tile-avatar >
+										<v-icon class="[grey lighten-1 white--text]">folder</v-icon>
+									</v-list-tile-avatar>
+
+									<v-list-tile-content>
+										<v-list-tile-title>{{ row.name }}</v-list-tile-title>
+										<!-- <v-list-tile-sub-title>{{ item.subtitle }}</v-list-tile-sub-title> -->
+									</v-list-tile-content>
+
+									<v-list-tile-action>
+										<v-btn icon ripple>
+											<v-icon color="grey lighten-1">more_vert</v-icon>
+										</v-btn>
+									</v-list-tile-action>
+								</v-list-tile>
+
+								<v-divider inset></v-divider>
+
+								<v-subheader inset>Files</v-subheader>
+
+								<!-- <v-list-tile v-for="item in items2" :key="item.title" avatar @click="">
+									<v-list-tile-avatar>
+										<v-icon :class="[item.iconClass]">{{ item.icon }}</v-icon>
+									</v-list-tile-avatar>
+
+									<v-list-tile-content>
+										<v-list-tile-title>{{ item.title }}</v-list-tile-title>
+										<v-list-tile-sub-title>{{ item.subtitle }}</v-list-tile-sub-title>
+									</v-list-tile-content>
+
+									<v-list-tile-action>
+										<v-btn icon ripple>
+											<v-icon color="grey lighten-1">info</v-icon>
+										</v-btn>
+									</v-list-tile-action>
+								</v-list-tile> -->
+							</v-list>
+						</v-card>
+					</v-flex>
+				</v-layout>
+			</v-app>
+		</div>
+
+
+		<script>
+			ELEMENT.locale(ELEMENT.lang.en);
+			Vue.use(VueLazyload);
+			new Vue({
+				el: '#vapp',
+				data: {
+					items: [
+						{ icon: 'folder', iconClass: 'grey lighten-1 white--text', title: 'Photos', subtitle: 'Jan 9, 2014' },
+						{ icon: 'folder', iconClass: 'grey lighten-1 white--text', title: 'Recipes', subtitle: 'Jan 17, 2014' },
+						{ icon: 'folder', iconClass: 'grey lighten-1 white--text', title: 'Work', subtitle: 'Jan 28, 2014' }
+					],
+					items2: [
+						{ icon: 'assignment', iconClass: 'blue white--text', title: 'Vacation itinerary', subtitle: 'Jan 20, 2014' },
+						{ icon: 'call_to_action', iconClass: 'amber white--text', title: 'Kitchen remodel', subtitle: 'Jan 10, 2014' }
+					],
+					audioSource: '',
+					currentDir: '/',
+					dirBeforeLogout: '',
+					displayAudioPlayer: false,
+					displayMode: 'list',
+					displayVideoPlayer: false,
+					firstTimeOpened: true,
+					hiddenFiles: false,
+					isLoggedIn: Cookies.get("LAST_ACTIVITY") ? true : false,
+					isTableLoading: true,
+					localFileUploadDialog: false,
+					multipleSelection: [],
+					operation: {
+						type: '',
+						parentPath: '',
+						selectedFiles: ''
+					},
+					password: '',
+					remoteUploadDialog: false,
+					remoteUrl: '',
+					remoteUrlName: '',
+					tableData: [],
+					totalCurrentDirs: 0,
+					totalCurrentFiles: 0,
+					uploadFilesList: [],
+					username: '',
+					videoSource: '',
+					audioExtensions: ['mp3'],
+					videoExtensions: ['mp4'],
+					imageExtensions: ["jpeg", "jpg", "JPG", "JPEG", "ase", "art", "bmp", "blp", "cd5", "cit", "cpt", "cr2", "cut", "dds", "dib", "djvu", "egt", "exif", "gif", "gpl", "grf", "icns", "ico", "iff", "jng", "jfif", "jp2", "jps", "lbm", "max", "miff", "mng", "msp", "nitf", "ota", "pbm", "pc1", "pc2", "pc3", "pcf", "pcx", "pdn", "pgm", "PI1", "PI2", "PI3", "pict", "pct", "pnm", "pns", "ppm", "psb", "psd", "pdd", "psp", "px", "pxm", "pxr", "qfx", "raw", "rle", "sct", "sgi", "rgb", "int", "bw", "tga", "tiff", "tif", "vtf", "xbm", "xcf", "xpm", "3dv", "amf", "ai", "awg", "cgm", "cdr", "cmx", "dxf", "e2d", "egt", "eps", "fs", "gbr", "odg", "svg", "stl", "vrml", "x3d", "sxd", "v2d", "vnd", "wmf", "emf", "art", "xar", "png", "webp", "jxr", "hdp", "wdp", "cur", "ecw", "iff", "lbm", "liff", "nrrd", "pam", "pcx", "pgf", "sgi", "rgb", "rgba", "bw", "int", "inta", "sid", "ras", "sun", "tga"]
+				},
+				watch: {
+					audioSource() {
+						this.$refs['audioPlayer'].load();
+					},
+					videoSource() {
+						this.$refs['videoPlayer'].load();
+					}
+				},
+				computed: {
+
+					stack() {
+						var substring = this.currentDir;
+						if (this.currentDir == '/') {
+							return [];
+						}
+						substring = substring.substring(1);
+						return substring.split('/');
+					},
+
+					pageWidth() {
+						if (this.displayMode == 'gallery') {
+							return 'calc(100% - 120px)';
+						}
+						return '900px';
+					},
+
+					tableDataFinal() {
+						this.totalCurrentFiles = 0;
+						this.totalCurrentDirs = 0;
+						var arrDir = [];
+						for (var temp of this.tableData) {
+							if (temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
+								this.totalCurrentDirs++;
+								arrDir.push(temp);
+							}
+						}
+
+						var arrFile = [];
+						for (var temp of this.tableData) {
+							if (!temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
+								if (this.displayMode == 'list' || (this.displayMode == 'gallery' && this.isImage(temp.name))) {
+									this.totalCurrentFiles++;
+									arrFile.push(temp);
+								}
+							}
+						}
+
+						arrDir.sort((o1, o2) => {
+							return o1.name.localeCompare(o2.name);
+						});
+						arrFile.sort((o1, o2) => {
+							return o1.name.localeCompare(o2.name);
+						});
+						return arrDir.concat(arrFile);
+					}
+
+				},
+
+				created() {
+					this.extractUrlParam();
+					this.isLoggedIn = Cookies.get("LAST_ACTIVITY") ? true : false;
+					if (!this.isLoggedIn) {
+						this.firstTimeOpened = false;
+						return;
+					}
+					this.isLoggedIn = true;
+					this.refresh();
+				},
+
+				methods: {
+
+					playAudio(name) {
+						this.displayAudioPlayer = true;
+						this.audioSource = '/apis/download.php?path=' + (this.currentDir == '/' ? '/' : encodeURIComponent(this.currentDir) + '/') + name;
+					},
+
+					playVideo(name) {
+						this.displayVideoPlayer = true;
+						this.videoSource = '/apis/download.php?path=' + (this.currentDir == '/' ? '/' : encodeURIComponent(this.currentDir) + '/') + name;
+					},
+
+					closeAudioPlayer() {
+						this.displayAudioPlayer = false;
+						this.audioSource = '';
+						this.$refs.audioPlayer.load();
+					},
+
+					closeVideoPlayer() {
+						this.displayVideoPlayer = false;
+						this.videoSource = '';
+						this.$refs.videoPlayer.load();
+					},
+
+					isImage(name) {
+						return this.imageExtensions.indexOf(name.substring(name.lastIndexOf('.') + 1)) != -1;
+					},
+
+					isAudio(name) {
+						return this.audioExtensions.indexOf(name.substring(name.lastIndexOf('.') + 1)) != -1;
+					},
+
+					isVideo(name) {
+						return this.videoExtensions.indexOf(name.substring(name.lastIndexOf('.') + 1)) != -1;
+					},
+
+					extractUrlParam() {
+						var paramsPath = location.search.substring(1);
+						if (paramsPath) {
+							var parameters = paramsPath.split("&");
+							if (parameters.length > 0) {
+								var firstParam = paramsPath;
+								if (firstParam.indexOf('=') != -1) {
+									firstParamVal = firstParam.split('=')[1];
+									if (firstParamVal) {
+										firstParamVal = unescape(firstParamVal);
+										if (firstParamVal) {
+											this.currentDir = firstParamVal;
+										}
+									}
+								}
+							}
+						}
+					},
+
+					login() {
+
+						if (!this.username || !this.password) {
+							this.$message({
+								message: 'Please fill username and password',
+								type: 'error',
+								center: true
+							});
+							return;
+						}
+
+						axios.post('/apis/signin.php', {
+							'username': this.username, 'password': this.password
+						}).then(result => {
+							if (result.data.status == 'success') {
+								Cookies.set('LAST_ACTIVITY', 'youcandeleteit', { expires: 86400 }); // 1 day
+								this.isLoggedIn = true;
+								if (this.dirBeforeLogout) {
+									this.currentDir = this.dirBeforeLogout;
+								}
+								this.refresh();
+							} else {
+								this.password = '';
+								this.$message({
+									message: result.data.message,
+									type: 'error',
+									center: true
+								});
+							}
+						}).catch(error => {
+							this.$message({
+								message: 'Error while checking login details',
+								type: 'error',
+								center: true
+							});
+						});
+					},
+
+					logout() {
+						this.dirBeforeLogout = '';
+						window.history.replaceState('', 'File Manager', '?');
+						this.currentDir = '/';
+						this.tableData = [];
+						this.isTableLoading = false;
+						axios.post('/apis/signout.php');
+						Cookies.expire("LAST_ACTIVITY");
+						this.isLoggedIn = false;
+						this.firstTimeOpened = false;
+					},
+
+					openLocalUploadDialog() {
+						this.localFileUploadDialog = true;
+					},
+
+					closeLocalUploadDialog() {
+						this.localFileUploadDialog = false;
+						this.refresh();
+						this.uploadFilesList.splice(0, this.uploadFilesList.length);
+					},
+
+					openRemoteUploadDialog() {
+						this.remoteUrl = '';
+						this.remoteUrlName = '';
+						this.remoteUploadDialog = true;
+					},
+
+					setOpearation(type) {
+						this.operation.type = type;
+						this.operation.parentPath = this.currentDir;
+						this.operation.selectedFiles = this.multipleSelection;
+					},
+
+					handleCommand(command) {
+						if (command == 'cut') {
+							this.setOpearation('cut');
+						} else if (command == 'copy') {
+							this.setOpearation('copy');
+						} else if (command == 'paste') {
+							this.paste();
+						} else if (command == 'rename') {
+							this.rename();
+						} else if (command == 'size') {
+							this.fetchSize();
+						} else if (command == 'delete') {
+							this.delete();
+						}
+					},
+
+					fetchSize() {
+						var url = `/apis/size.php`;
+						axios.post(url, {
+							'parentDir': this.currentDir,
+							'files': JSON.stringify(this.multipleSelection)
+						}).then((response) => {
+							this.$message({
+								message: 'Size : ' + response.data
+							});
+						}).catch(() => {
+							this.$message({
+								type: 'error',
+								message: 'Unable to fetch file(s) size'
+							});
+						});
+					},
+
+					paste() {
+						var url = `/apis/${this.operation.type}.php`;
+						axios.post(url, {
+							'sourceDir': this.operation.parentPath,
+							'files': JSON.stringify(this.operation.selectedFiles),
+							'destinationDir': this.currentDir
+						}).then((response) => {
+							this.refresh();
+							this.operation.parentPath = '';
+						}).catch(() => {
+							this.operation.parentPath = '';
+							this.$message({
+								type: 'error',
+								message: `Unable to ${this.operation.type} file(s)`
+							});
+						});
+					},
+
+					rename() {
+						this.$prompt('Please enter new name', {
+							confirmButtonText: 'Ok',
+							cancelButtonText: 'Cancel',
+						}).then(value => {
+							value = value.value;
+							if (value) {
+								var url = '/apis/rename.php';
+								axios.post(url, {
+									'parentDir': this.currentDir,
+									'newName': value,
+									'oldName': this.multipleSelection[0]
+								}).then((response) => {
+									this.refresh();
+								}).catch(() => {
+									this.$message({
+										type: 'error',
+										message: `Unable to rename file`
+									});
+								});
+							}
+						}).catch(() => { });
+					},
+
+					delete() {
+						this.$confirm('Are you sure want to permanently delete ?', {
+							confirmButtonText: 'Yes',
+							cancelButtonText: 'No',
+							type: 'warning'
+						}).then(() => {
+							axios.post('/apis/delete.php', {
+								'parentDir': this.currentDir,
+								'files': JSON.stringify(this.multipleSelection)
+							}).then((response) => {
+								this.refresh();
+							}).catch(() => {
+								this.$message({
+									type: 'error',
+									message: 'Unable to delete files'
+								});
+							});
+						}).catch(() => {
+						});
+					},
+
+					remoteUpload() {
+						this.remoteUploadDialog = false;
+						axios.post('/apis/remote-upload.php', {
+							'parentDir': this.currentDir,
+							'url': this.remoteUrl,
+							'filename': this.remoteUrlName
+						}).then((response) => {
+							this.$message({
+								message: response.data
+							});
+							this.openDir(this.currentDir);
+						});
+						this.$message({
+							type: 'success',
+							message: 'Your file will soon be downloaded'
+						});
+					},
+
+					openStack(index) {
+						var path = '';
+						for (var i = 0; i <= index; i++) {
+							path = path + '/' + this.stack[i];
+						}
+						this.openDir(path);
+					},
+
+					addDirectory() {
+						this.$prompt('Please enter directory name', {
+							confirmButtonText: 'Add',
+							cancelButtonText: 'Cancel',
+						}).then(value => {
+							if (value) {
+								axios.post('/apis/dir-add.php', {
+									'dirname': value.value,
+									'parentPath': this.currentDir
+								})
+									.then((response) => {
+										this.$message({
+											type: 'success',
+											message: 'Directory Added'
+										});
+										this.refresh();
+									}).catch(() => {
+										this.$message({
+											type: 'error',
+											message: 'Unable to add directory'
+										});
+									})
+							}
+						}).catch(() => { });
+					},
+
+					refresh() {
+						this.openDir(this.currentDir);
+					},
+
+					handleSelectionChange(val) {
+						this.multipleSelection = val.map(obj => obj.name);
+					},
+
+					openDirFromList(name) {
+						if (this.currentDir == '/') {
+							this.openDir('/' + name);
+						} else {
+							this.openDir(this.currentDir + '/' + name);
+						}
+					},
+
+					openDir(path) {
+						this.isTableLoading = true;
+						window.history.replaceState('', 'File Manager', '?path=' + path);
+						axios.get('/apis/files-list.php?path=' + encodeURIComponent(path))
+							.then((response) => {
+								this.currentDir = path;
+								this.tableData = response.data;
+								this.isTableLoading = false;
+								this.firstTimeOpened = false;
+							})
+							.catch((error) => {
+								if (error.response.data.message == 'Login Required') {
+									this.logout();
+									this.dirBeforeLogout = path;
+								} else {
+									this.$message({
+										type: 'error',
+										message: error.response.data.message
+									});
+								}
+							});
+					},
+
+					getThumbnailSmall(name) {
+						return
+					},
+
+					download(name) {
+						document.location = '/apis/download.php?path=' + encodeURIComponent((this.currentDir == '/' ? '/' : this.currentDir + '/') + name);
+					}
+				}
+			});
+		</script>
+	</body>
+
+</html>
