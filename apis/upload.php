@@ -22,7 +22,7 @@ if (strpos($parentDir, '/') != 0) {
 $parentDir = $baseDir . $parentDir . '/';
 
 $uploadfilePath = $parentDir . str_replace(' ', ' ', basename($_FILES['file']['name']));
-
+echo 'asas==='.$_FILES['file'];
 if (rename($_FILES['file']['tmp_name'], $uploadfilePath)) {
 	echo "success";
 } else {

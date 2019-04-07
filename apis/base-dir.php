@@ -2,12 +2,12 @@
 
 // Note : don't add '/' at the end
 $credentials_list = array();
-array_push($credentials_list, array('username' => 'ashish', 'password' => 'pass@123', 'baseDirectory' => '/home/ashish'));
+array_push($credentials_list, array('username' => 'impadmin', 'password' => 'impetus', 'baseDirectory' => '/home/ashish'));
 array_push($credentials_list, array('username' => 'user2', 'password' => 'pass2', 'baseDirectory' => '/path-to-a-directory-1'));
 
 
 /**
- *	Return the path of base directory if credentials are valid otherwise null 
+ *	Return the path of base directory if credentials are valid otherwise null
  */
 function areCredentialsValid($username, $password) {
 	global $credentials_list;
@@ -23,7 +23,7 @@ function areCredentialsValid($username, $password) {
 }
 
 /**
- * Returns the path of base directory saved in the session 
+ * Returns the path of base directory saved in the session
  */
 function getBaseDirectory() {
 	session_start();
