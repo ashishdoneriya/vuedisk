@@ -11,6 +11,7 @@
 		<meta content="telephone=no" name="format-detection" />
 		<link rel="icon" type="image/png" href="/icons/favico.png" />
 		<link rel="stylesheet" href="/css/theme/index.css">
+		<link rel="stylesheet" href="/css/theme/display.css">
 		<link rel="stylesheet" href="/fonts/Roboto/roboto.css">
 		<link rel="stylesheet" href="/css/index.css">
 		<script src="/js/vue.min.js"></script>
@@ -94,16 +95,15 @@
 						<el-col :span="24">
 							<el-card v-show="displayMode == 'list'">
 								<el-table ref="multipleTable" :data="tableDataFinal" v-loading="isTableLoading" style="width: 100%" @selection-change="handleSelectionChange" size="medium" highlight-current-row>
-									<el-table-column type="selection" width="55">
+									<el-table-column type="selection" style="padding-left:0px !important" width="30">
 									</el-table-column>
 									<el-table-column label="Name">
 										<template slot-scope="scope">
 											<span v-if="scope.row.isDir" class="fonts" style="font-weight: 500;" @click="openDirFromList(scope.row.name)">{{ scope.row.name }}</span>
-
 											<span v-if="!scope.row.isDir" class="fonts" @click="download(scope.row.name)">{{ scope.row.name }}</span>
 										</template>
 									</el-table-column>
-									<el-table-column align="right" class="hidden-md-and-up">
+									<el-table-column v-if="!isMobile" align="right" width="80">
 										<template slot-scope="scope">
 											<el-button v-if="!scope.row.isDir && isAudio(scope.row.name)" size="mini" @click="playAudio(scope.row.name)" style="margin-right:10px">Play</el-button>
 											<el-button v-if="!scope.row.isDir && isVideo(scope.row.name)" size="mini" @click="playVideo(scope.row.name)" style="margin-right:10px">Play</el-button>
@@ -120,7 +120,7 @@
 							<div v-if="displayMode == 'gallery'">
 								<el-row style="margin-bottom:20px" v-if="totalCurrentDirs > 0">
 									<span style="font-family:Roboto;font-size:18px;font-weight:400;color:#555">Folders
-										<span>
+									</span>
 								</el-row>
 								<el-row v-if="totalCurrentDirs > 0">
 									<div v-for="row of this.tableDataFinal" @click="openDirFromList(row.name)" style="display: inline-block;margin:10px;cursor:pointer">
@@ -135,7 +135,7 @@
 								</el-row>
 								<el-row style="margin-bottom:20px" v-if="totalCurrentFiles > 0">
 									<span style="font-family:Roboto;font-size:18px;font-weight:400;color:#555">Files
-										<span>
+									</span>
 								</el-row>
 								<el-row v-if="totalCurrentFiles > 0" style="display: flex;flex-wrap: wrap;flex-flow: row wrap;justify-content: center;">
 									<img v-for="row of this.tableDataFinal" v-if="!row.isDir" v-lazy="'/apis/thumbnail.php?type=small&name=' + row.name + '&parent=' + encodeURIComponent(currentDir)" v-img="{group :  'gallery', title: row.name, src : '/apis/thumbnail.php?type=large&name=' + row.name + '&parent=' + encodeURIComponent(currentDir), sourceButton: 'true', sourceButtonDownloadLink: '/apis/download.php?path=' + (currentDir == '/' ? '/' : encodeURIComponent(currentDir) + '/') + row.name}" style="height:320px;margin: 5px;float:left" :title="row.name">
@@ -241,6 +241,15 @@
 					}
 				},
 				computed: {
+
+					isMobile() {
+						if (screen.width <= 760) {
+							return true;
+						}
+						else {
+							return false;
+						}
+					},
 
 					stack() {
 						var substring = this.currentDir;
