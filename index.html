@@ -146,11 +146,29 @@
 				</el-main>
 			</el-container>
 			<el-dialog v-cloak title="File(s) Upload" :visible.sync="localFileUploadDialog">
-				<el-form>
-					<el-upload :action="'/apis/upload.php?parentDir=' + encodeURIComponent(currentDir)" multiple :file-list="uploadFilesList">
-						<el-button size="small" type="primary">Add Files</el-button>
-					</el-upload>
-				</el-form>
+				<div class="clearfix">
+						<span>
+							<div class="upload-btn-wrapper">
+								<el-button type="primary" @click="openUploadDialog()">Upload</el-button>
+								<input type="file" id="file" ref="files" multiple @change="addFiles()" />
+							</div>
+						</span>
+						<el-button style="float: right; padding: 3px 0" @click="clear" type="text">Clear</el-button>
+						<el-button style="float: right; padding: 3px 0" type="text">Resume</el-button>
+						<el-button style="float: right; padding: 3px 0" type="text">Pause</el-button>
+
+
+					</div>
+					<div  class="row-bg" v-for="fileInfo in filesToUpload" :key="fileInfo.file">
+						<div :span="24">
+								{{fileInfo.file.name}}
+								<el-button style="float: right; padding: 3px 0" @click="resumeFileUpload(fileInfo)" type="text">Resume</el-button>
+								<el-button style="float: right; padding: 3px 0" @click="stopFileUpload(fileInfo)" type="text">Pause</el-button>
+						</div>
+						<div :span="24">
+								<el-progress :percentage="fileInfo.progress()"></el-progress>
+						</div>
+					</div>
 				<span slot="footer" class="dialog-footer">
 					<el-button type="primary" @click="closeLocalUploadDialog()">Close</el-button>
 				</span>
@@ -228,6 +246,9 @@
 					uploadFilesList: [],
 					username: '',
 					videoSource: '',
+					filesToUpload: [],
+					maxThreads: 4,
+					threadsRunning: 0,
 					audioExtensions: ['mp3'],
 					videoExtensions: ['mp4'],
 					imageExtensions: ["jpeg", "jpg", "JPG", "JPEG", "ase", "art", "bmp", "blp", "cd5", "cit", "cpt", "cr2", "cut", "dds", "dib", "djvu", "egt", "exif", "gif", "gpl", "grf", "icns", "ico", "iff", "jng", "jfif", "jp2", "jps", "lbm", "max", "miff", "mng", "msp", "nitf", "ota", "pbm", "pc1", "pc2", "pc3", "pcf", "pcx", "pdn", "pgm", "PI1", "PI2", "PI3", "pict", "pct", "pnm", "pns", "ppm", "psb", "psd", "pdd", "psp", "px", "pxm", "pxr", "qfx", "raw", "rle", "sct", "sgi", "rgb", "int", "bw", "tga", "tiff", "tif", "vtf", "xbm", "xcf", "xpm", "3dv", "amf", "ai", "awg", "cgm", "cdr", "cmx", "dxf", "e2d", "egt", "eps", "fs", "gbr", "odg", "svg", "stl", "vrml", "x3d", "sxd", "v2d", "vnd", "wmf", "emf", "art", "xar", "png", "webp", "jxr", "hdp", "wdp", "cur", "ecw", "iff", "lbm", "liff", "nrrd", "pam", "pcx", "pgf", "sgi", "rgb", "rgba", "bw", "int", "inta", "sid", "ras", "sun", "tga"]
@@ -238,9 +259,22 @@
 					},
 					videoSource() {
 						this.$refs['videoPlayer'].load();
+					},
+					threadsRunning() {
+						this.addThread();
 					}
 				},
 				computed: {
+
+					filesUploaded() {
+						let count = 0;
+						for (let fileToUpload of this.filesToUpload) {
+							if (fileToUpload.isUploaded()) {
+								count++;
+							}
+						}
+						return count;
+					},
 
 					isMobile() {
 						if (screen.width <= 760) {
@@ -311,6 +345,10 @@
 				},
 
 				methods: {
+
+					openUploadDialog() {
+						this.$refs.files.click();
+					},
 
 					playAudio(name) {
 						this.displayAudioPlayer = true;
@@ -630,6 +668,118 @@
 
 					download(name) {
 						document.location = '/apis/download.php?path=' + encodeURIComponent((this.currentDir == '/' ? '/' : this.currentDir + '/') + name);
+					},
+					stopFileUpload(fileInfo) {
+						let threadsStopped = fileInfo.stop();
+						if (threadsStopped > this.threadsRunning) {
+							this.threadsRunning = 0;
+						} else {
+							this.threadsRunning = this.threadsRunning - threadsStopped;
+						}
+					},
+					resumeFileUpload(fileInfo) {
+						fileInfo.resume();
+						this.addThread();
+					},
+					addThread() {
+						if (this.threadsRunning < this.maxThreads && this.filesToUpload.length > 0) {
+							for (let fileToUpload of this.filesToUpload) {
+								if (fileToUpload.canCreatePromise()) {
+									fileToUpload.createPromise().then(info => {
+										let obj = info.fileInfo;
+										obj.chunksUploaded++;
+										obj.chunksUploading--;
+										this.threadsRunning--;
+										delete obj.threads[info.index];
+									})
+									this.threadsRunning++;
+									return;
+								}
+							}
+						}
+					},
+					clear() {
+						this.filesToUpload = [];
+						this.$refs.files.value = '';
+					},
+					addFiles() {
+						this.showUploadProgress = false;
+						for (let file of this.$refs.files.files) {
+							console.log(file);
+							this.filesToUpload.push(this.createFileInfoObject(file));
+						}
+						this.addThread();
+					},
+					createFileInfoObject(file) {
+						let size = file.size;
+						let bytesPerChunk = parseInt(2097152, 10);
+						if (size > this.threads * 200 * 1024 && size < this.threads * 8 * 1024 * 1024) {
+							bytesPerChunk = parseInt(bytesPerChunk / this.threads, 10);
+						}
+						let totalNoOfChunks = Math.max(Math.ceil(size / bytesPerChunk), 1);
+
+						return {
+							parentDir : this.currentDir,
+							file: file,
+							bytesPerChunk: bytesPerChunk,
+							totalNoOfChunks: totalNoOfChunks,
+							chunksUploaded: 0,
+							chunksUploading: 0,
+							isPaused: false,
+							threads: {},
+							canCreatePromise() {
+								if ((this.chunksUploaded + this.chunksUploading) != this.totalNoOfChunks && !this.isPaused) {
+									return true;
+								}
+								return false;
+							},
+							isUploaded() {
+								return this.chunksUploaded == this.totalNoOfChunks;
+							},
+							createPromise() {
+								let start = (this.chunksUploaded + this.chunksUploading) * this.bytesPerChunk;
+								let end = start + this.bytesPerChunk;
+								let blob = this.file.slice(start, end);
+
+								let chunkToUpload = this.chunksUploaded + this.chunksUploading + 1;
+								return new Promise((resolve, reject) => {
+									let fd = new FormData();
+									let xhr = new XMLHttpRequest();
+									fd.append('upload', blob, this.file.name);
+									fd.append('num', chunkToUpload);
+									fd.append('num_chunks', this.totalNoOfChunks);
+									fd.append('parentDir', this.parentDir);
+									xhr.open('POST', '/apis/upload.php', true);
+									this.threads[chunkToUpload] = () => {
+										xhr.abort();
+									}
+									this.chunksUploading++;
+									xhr.onload = () => resolve({ 'fileInfo': this, 'index': chunkToUpload });
+									xhr.onerror = () => reject(xhr.statusText);
+									xhr.send(fd);
+								});
+							},
+							stop() {
+								this.isPaused = true;
+								let threadsStopped = 0;
+								for (var key in this.threads) {
+									this.threads[key]();
+									threadsStopped++;
+								}
+								this.threads = {};
+								this.chunksUploading = 0;
+								return threadsStopped;
+							},
+							resume() {
+								this.isPaused = false;
+							},
+							progress() {
+								return parseInt(this.chunksUploaded * 100 / this.totalNoOfChunks);
+							}
+						};
+					},
+					submitFiles() {
+						this.addThread();
 					}
 				}
 			});

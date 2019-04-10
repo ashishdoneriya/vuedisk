@@ -93,3 +93,15 @@ body {
 [v-cloak] {
  display:none !important;
 }
+
+.upload-btn-wrapper {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+}
+
+.upload-btn-wrapper input[type=file] {
+	position:absolute;
+  top: -1000px;
+	cursor: pointer;
+}
