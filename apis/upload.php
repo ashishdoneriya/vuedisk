@@ -43,10 +43,12 @@ if (!file_exists($target_path)) {
 }
 move_uploaded_file($tmp_name, $target_file.$num);
 
-$lockPath =  $target_path . 'locks/'. $filename . '/';
+$lockPath =  $target_path . 'temp/'. $filename . '/lock/';
+
 if (!file_exists($lockPath)) {
     mkdir($lockPath, 0777, true);
 }
+$chunksUploadedPath =  $target_path . 'temp/'. $filename . '/chunksUploaded.txt';
 
 while (true) {
 	$lock = getLock($lockPath, $filename);
@@ -57,32 +59,50 @@ while (true) {
 	sleep(10);
 }
 
-// count number of uploaded chunks
-$chunksUploaded = 0;
-for ( $i = 1; $i <= $num_chunks; $i++ ) {
-    if ( file_exists( $target_file.$i ) ) {
-         ++$chunksUploaded;
-    }
-}
+$uploadedChunks = updateAndGetChunksUploaded($chunksUploadedPath);
 
 // and THAT's what you were asking for
 // when this triggers - that means your chunks are uploaded
-if ($chunksUploaded == $num_chunks) {
-
+if ($uploadedChunks == $num_chunks) {
+	$isFirst = 1;
     /* here you can reassemble chunks together */
     for ($i = 1; $i <= $num_chunks; $i++) {
+	  if (file_exists($target_file.$i)) {
+		if ($isFirst == 1) {
+			rename($target_file.$i, $target_file);
+			$isFirst = 0;
+		} else {
+			$source_file = fopen($target_file.$i, 'rb');
+			$final = fopen($target_file, 'ab');
+			if ($source_file !== false && $final !== false) {
+				while (($buffer = fgets($source_file, 5242880)) !== false) {
+					fwrite($final, $buffer);
+				}
+				fclose($source_file);
+				fclose($final);
+				unlink($target_file.$i);
+			}
 
-      $file = fopen($target_file.$i, 'rb');
-      $buff = fread($file, filesize($target_file.$i));
-      fclose($file);
-
-      $final = fopen($target_file, 'ab');
-      $write = fwrite($final, $buff);
-      fclose($final);
-
-      unlink($target_file.$i);
+		}
+	  }
 	}
-	rrmdir($lockPath);
+	rrmdir($target_path . 'temp/'. $filename);
+
+} else if ($num > 1) {
+	$prevNum = $num - 1;
+	if (file_exists($target_file.$prevNum)) {
+
+		$file = fopen($target_file.$num, 'rb');
+		$buff = fread($file, filesize($target_file.$num));
+		fclose($file);
+
+		$final = fopen($target_file.$prevNum, 'ab');
+		$write = fwrite($final, $buff);
+		fclose($final);
+
+		unlink($target_file.$num);
+		rename($target_file.$prevNum, $target_file.$num );
+	}
 }
 
 if (file_exists($lockPath)) {
@@ -97,6 +117,23 @@ if (file_exists($lockPath)) {
 }
 
 echo 'success';
+
+function updateAndGetChunksUploaded($path) {
+	if (file_exists($path)) {
+		$uploaded = (int) file_get_contents($path);
+		$uploaded += 1;
+		unlink($path);
+		$myfile = fopen($path, "w");
+		fwrite($myfile, (string) $uploaded);
+		fclose($myfile);
+		return $uploaded;
+	} else {
+		$myfile = fopen($path, "w");
+		fwrite($myfile, '1');
+		fclose($myfile);
+		return 1;
+	}
+}
 
 function rrmdir($dir) {
 	if (is_dir($dir)) {
