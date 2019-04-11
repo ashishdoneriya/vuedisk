@@ -39,7 +39,7 @@ $target_file = $target_path.$filename;
 $num = $_POST['num'];
 $num_chunks = $_POST['num_chunks'];
 if (!file_exists($target_path)) {
-    mkdir($lockPath, 0777, true);
+    mkdir($target_file, 0777, true);
 }
 move_uploaded_file($tmp_name, $target_file.$num);
 
@@ -49,60 +49,59 @@ if (!file_exists($lockPath)) {
     mkdir($lockPath, 0777, true);
 }
 $chunksUploadedPath =  $target_path . 'temp/'. $filename . '/chunksUploaded.txt';
-
+$serialNumPath =  $target_path . 'temp/'. $filename . '/serialNo.txt';
 while (true) {
 	$lock = getLock($lockPath, $filename);
 	if ($lock == 1) {
 		break;
 	}
-
-	sleep(10);
+	sleep(mt_rand(10, 50));
 }
 
 $uploadedChunks = updateAndGetChunksUploaded($chunksUploadedPath);
+$serialNumber = getSerialNumber();
+
+if ($serialNumber == 0) {
+	if ($num == 1) {
+		$serialNumber = 1;
+		$final = fopen($target_file.'1', 'ab');
+		$i = $serialNumber + 1;
+		for (; $i <= $uploadedChunks; $i++) {
+			if (!file_exists($target_file.$i)) {
+				break;
+			}
+			$file = fopen($target_file.$i, 'rb');
+			$buff = fread($file, filesize($target_file.$i));
+			fclose($file);
+			$write = fwrite($final, $buff);
+			unlink($target_file.$i);
+		}
+		fclose($final);
+		setSerialNumber($i - 1);
+	}
+} else {
+	$i = $serialNumber + 1;
+	$final = fopen($target_file.'1', 'ab');
+	for (; $i <= $uploadedChunks; $i++) {
+		if (!file_exists($target_file.$i)) {
+			break;
+		}
+		$file = fopen($target_file.$i, 'rb');
+		$buff = fread($file, filesize($target_file.$i));
+		fclose($file);
+		$write = fwrite($final, $buff);
+		unlink($target_file.$i);
+	}
+	fclose($final);
+	setSerialNumber($i - 1);
+}
+
 
 // and THAT's what you were asking for
 // when this triggers - that means your chunks are uploaded
 if ($uploadedChunks == $num_chunks) {
-	$isFirst = 1;
-    /* here you can reassemble chunks together */
-    for ($i = 1; $i <= $num_chunks; $i++) {
-	  if (file_exists($target_file.$i)) {
-		if ($isFirst == 1) {
-			rename($target_file.$i, $target_file);
-			$isFirst = 0;
-		} else {
-			$source_file = fopen($target_file.$i, 'rb');
-			$final = fopen($target_file, 'ab');
-			if ($source_file !== false && $final !== false) {
-				while (($buffer = fgets($source_file, 5242880)) !== false) {
-					fwrite($final, $buffer);
-				}
-				fclose($source_file);
-				fclose($final);
-				unlink($target_file.$i);
-			}
-
-		}
-	  }
-	}
+	rename($target_file.'1', $target_file );
 	rrmdir($target_path . 'temp/'. $filename);
-
-} else if ($num > 1) {
-	$prevNum = $num - 1;
-	if (file_exists($target_file.$prevNum)) {
-
-		$file = fopen($target_file.$num, 'rb');
-		$buff = fread($file, filesize($target_file.$num));
-		fclose($file);
-
-		$final = fopen($target_file.$prevNum, 'ab');
-		$write = fwrite($final, $buff);
-		fclose($final);
-
-		unlink($target_file.$num);
-		rename($target_file.$prevNum, $target_file.$num );
-	}
 }
 
 if (file_exists($lockPath)) {
@@ -132,6 +131,25 @@ function updateAndGetChunksUploaded($path) {
 		fwrite($myfile, '1');
 		fclose($myfile);
 		return 1;
+	}
+}
+
+function setSerialNumber($serialNumber) {
+	global $serialNumPath;
+	if (file_exists($serialNumPath)) {
+		unlink($serialNumPath);
+	}
+	$myfile = fopen($serialNumPath, "w");
+	fwrite($myfile, (string) $serialNumber);
+	fclose($myfile);
+}
+
+function getSerialNumber() {
+	global $serialNumPath;
+	if (file_exists($serialNumPath)) {
+		return (int) file_get_contents($serialNumPath);
+	} else {
+		return 0;
 	}
 }
 

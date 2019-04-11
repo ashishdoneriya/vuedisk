@@ -166,7 +166,8 @@
 								<el-button style="float: right; padding: 3px 0" @click="stopFileUpload(fileInfo)" type="text">Pause</el-button>
 						</div>
 						<div :span="24">
-								<el-progress :percentage="fileInfo.progress()"></el-progress>
+								<el-progress v-if="fileInfo.isUploaded" :percentage="100" status="success"></el-progress>
+								<el-progress v-else :percentage="fileInfo.progress()"></el-progress>
 						</div>
 					</div>
 				<span slot="footer" class="dialog-footer">
