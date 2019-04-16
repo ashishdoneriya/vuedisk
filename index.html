@@ -147,29 +147,29 @@
 			</el-container>
 			<el-dialog v-cloak title="File(s) Upload" :visible.sync="localFileUploadDialog">
 				<div class="clearfix">
-						<span>
-							<div class="upload-btn-wrapper">
-								<el-button type="primary" @click="openUploadDialog()">Upload</el-button>
-								<input type="file" id="file" ref="files" multiple @change="addFiles()" />
-							</div>
-						</span>
-						<el-button style="float: right; padding: 3px 0" @click="clear" type="text">Clear</el-button>
-						<el-button style="float: right; padding: 3px 0" type="text">Resume</el-button>
-						<el-button style="float: right; padding: 3px 0" type="text">Pause</el-button>
+					<span>
+						<div class="upload-btn-wrapper">
+							<el-button type="primary" @click="openUploadDialog()">Upload</el-button>
+							<input type="file" id="file" ref="files" multiple @change="addFiles()" />
+						</div>
+					</span>
+					<el-button style="float: right; padding: 3px 0" @click="clear" type="text">Clear</el-button>
+					<el-button style="float: right; padding: 3px 0" type="text">Resume</el-button>
+					<el-button style="float: right; padding: 3px 0" type="text">Pause</el-button>
 
 
+				</div>
+				<div class="row-bg" v-for="fileInfo in filesToUpload" :key="fileInfo.file">
+					<div :span="24">
+						{{fileInfo.file.name}}
+						<el-button style="float: right; padding: 3px 0" @click="resumeFileUpload(fileInfo)" type="text">Resume</el-button>
+						<el-button style="float: right; padding: 3px 0" @click="stopFileUpload(fileInfo)" type="text">Pause</el-button>
 					</div>
-					<div  class="row-bg" v-for="fileInfo in filesToUpload" :key="fileInfo.file">
-						<div :span="24">
-								{{fileInfo.file.name}}
-								<el-button style="float: right; padding: 3px 0" @click="resumeFileUpload(fileInfo)" type="text">Resume</el-button>
-								<el-button style="float: right; padding: 3px 0" @click="stopFileUpload(fileInfo)" type="text">Pause</el-button>
-						</div>
-						<div :span="24">
-								<el-progress v-if="fileInfo.isUploaded" :percentage="100" status="success"></el-progress>
-								<el-progress v-else :percentage="fileInfo.progress()"></el-progress>
-						</div>
+					<div :span="24">
+						<el-progress v-if="fileInfo.isUploaded()" :percentage="100" status="success"></el-progress>
+						<el-progress v-else :percentage="fileInfo.progressComputed"></el-progress>
 					</div>
+				</div>
 				<span slot="footer" class="dialog-footer">
 					<el-button type="primary" @click="closeLocalUploadDialog()">Close</el-button>
 				</span>
@@ -706,21 +706,17 @@
 					addFiles() {
 						this.showUploadProgress = false;
 						for (let file of this.$refs.files.files) {
-							console.log(file);
 							this.filesToUpload.push(this.createFileInfoObject(file));
 						}
 						this.addThread();
 					},
 					createFileInfoObject(file) {
 						let size = file.size;
-						let bytesPerChunk = parseInt(2097152, 10);
-						if (size > this.threads * 200 * 1024 && size < this.threads * 8 * 1024 * 1024) {
-							bytesPerChunk = parseInt(bytesPerChunk / this.threads, 10);
-						}
+						let bytesPerChunk = 524288;
 						let totalNoOfChunks = Math.max(Math.ceil(size / bytesPerChunk), 1);
 
 						return {
-							parentDir : this.currentDir,
+							parentDir: this.currentDir,
 							file: file,
 							bytesPerChunk: bytesPerChunk,
 							totalNoOfChunks: totalNoOfChunks,
@@ -728,6 +724,7 @@
 							chunksUploading: 0,
 							isPaused: false,
 							threads: {},
+							progressComputed: 0,
 							canCreatePromise() {
 								if ((this.chunksUploaded + this.chunksUploading) != this.totalNoOfChunks && !this.isPaused) {
 									return true;
@@ -751,9 +748,17 @@
 									fd.append('num_chunks', this.totalNoOfChunks);
 									fd.append('parentDir', this.parentDir);
 									xhr.open('POST', '/apis/upload.php', true);
-									this.threads[chunkToUpload] = () => {
+									this.threads[chunkToUpload] = {};
+									this.threads[chunkToUpload]['progress'] = 0.0;
+									this.threads[chunkToUpload]['stop'] = () => {
 										xhr.abort();
 									}
+									xhr.upload.addEventListener('progress', (evt) =>{
+										if (evt.lengthComputable) {
+											this.threads[chunkToUpload]['progress'] = evt.loaded / evt.total;
+											this.progressComputed = this.progress();
+										}
+									}, false);
 									this.chunksUploading++;
 									xhr.onload = () => resolve({ 'fileInfo': this, 'index': chunkToUpload });
 									xhr.onerror = () => reject(xhr.statusText);
@@ -764,7 +769,7 @@
 								this.isPaused = true;
 								let threadsStopped = 0;
 								for (var key in this.threads) {
-									this.threads[key]();
+									this.threads[key]['stop']();
 									threadsStopped++;
 								}
 								this.threads = {};
@@ -775,7 +780,11 @@
 								this.isPaused = false;
 							},
 							progress() {
-								return parseInt(this.chunksUploaded * 100 / this.totalNoOfChunks);
+								let chunksUploaded = this.chunksUploaded;
+								for (var key in this.threads) {
+									chunksUploaded += this.threads[key]['progress'];
+								}
+								return parseInt(chunksUploaded * 100 / this.totalNoOfChunks);
 							}
 						};
 					},
