@@ -13,7 +13,7 @@ $data = json_decode(file_get_contents('php://input'), true);
 $parentDir = htmlspecialchars(strip_tags($data['parentDir']));
 $url = $data['url'];
 
-$filename = strip_tags($data['filename'];
+$filename = strip_tags($data['filename']);
 if ($filename == null || $filename == '') {
 	$filename = basename($url);
 }
