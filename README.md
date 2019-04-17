@@ -8,7 +8,7 @@ username - admin , password - admin
 
 ## Features
 * Fast Uploading (parallel uploading feature)
-* Upload any size of file
+* Upload any size of file even when there is file size limitation in server
 * Folder upload
 * Remote file upload
 * Generate thumbnails dynamically
