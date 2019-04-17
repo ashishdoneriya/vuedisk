@@ -6,6 +6,16 @@ Inspired from Filegator, Aws S3 explorer and Google Drive UI.
 [Demo](http://test.csetutorials.com)\
 username - admin , password - admin
 
+## Features
+* Fast Uploading (parallel uploading feature)
+* Upload any size of file even when there is file size limitation in server
+* Folder upload
+* Remote file upload
+* Generate thumbnails dynamically
+* Fast & smooth navigation
+
+### Drawbacks
+* Not a quite good Mobile UI in potrait mode.
 
 [Download script](https://github.com/ashishdoneriya/php-file-manager/archive/v0.1.1.zip)
 
