@@ -148,11 +148,11 @@
 			<el-dialog v-cloak title="File(s) Upload" :visible.sync="localFileUploadDialog">
 				<div class="clearfix">
 					<span>
-						<div class="upload-btn-wrapper" style="margin-left:20px" v-if="isUploadDirSupported">
+						<div class="upload-btn-wrapper" v-if="isUploadDirSupported">
 								<el-button type="primary" @click="openFolderUploadDialog()">Add Folder</el-button>
 								<input type="file" id="file" ref="folderUploadInputButton" webkitdirectory multiple @change="addFolderToUpload()" />
 							</div>
-						<div class="upload-btn-wrapper">
+						<div class="upload-btn-wrapper" style="margin-left:20px">
 							<el-button type="primary" @click="openFileUploadDialog()">Add Files</el-button>
 							<input type="file" id="file" ref="fileUploadInputButton" multiple @change="addFilesToUpload()" />
 						</div>
