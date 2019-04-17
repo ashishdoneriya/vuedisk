@@ -9,33 +9,12 @@ if ($baseDir == null) {
 	return;
 }
 
-$parentDir = $_POST['parentDir'];
-
-function ends_with($haystack, $needles) {
-	foreach ((array) $needles as $needle) {
-		if ((string) $needle === substr($haystack, -strlen($needle))) {
-			return true;
-		}
-	}
-	return false;
-}
-
-if (!ends_with($parentDir, '/')) {
-	$parentDir = $parentDir . '/';
-}
-
-if (strpos($parentDir, '/') != 0) {
-	$parentDir =  '/' . $parentDir;
-}
-
-$parentDir = $baseDir . $parentDir . '/';
 $num = $_POST['num'];
 
-$target_path = $parentDir;
-
 $tmp_name = $_FILES['upload']['tmp_name'];
-$filename = $_FILES['upload']['name'];
-$target_file = $target_path.$filename;
+$target_path = $baseDir .  '/.cache/phpFileManager/';
+$filename =  $_POST['fileUniqueId'];
+$target_file = $baseDir .  '/.cache/phpFileManager/' . $filename;
 $num = $_POST['num'];
 $num_chunks = $_POST['num_chunks'];
 if (!file_exists($target_path)) {
@@ -43,13 +22,13 @@ if (!file_exists($target_path)) {
 }
 move_uploaded_file($tmp_name, $target_file.$num);
 
-$lockPath =  $target_path . 'temp/'. $filename . '/lock/';
+$lockPath =  $target_path . $filename . '/lock/';
 
 if (!file_exists($lockPath)) {
     mkdir($lockPath, 0777, true);
 }
-$chunksUploadedPath =  $target_path . 'temp/'. $filename . '/chunksUploaded.txt';
-$serialNumPath =  $target_path . 'temp/'. $filename . '/serialNo.txt';
+$chunksUploadedPath =  $target_path . $filename . '/chunksUploaded.txt';
+$serialNumPath =  $target_path . $filename . '/serialNo.txt';
 while (true) {
 	$lock = getLock($lockPath, $filename);
 	if ($lock == 1) {
@@ -100,8 +79,32 @@ if ($serialNumber == 0) {
 // and THAT's what you were asking for
 // when this triggers - that means your chunks are uploaded
 if ($uploadedChunks == $num_chunks) {
-	rename($target_file.'1', $target_file );
-	rrmdir($target_path . 'temp/'. $filename);
+	$parentDir = $_POST['parentDir'];
+
+	if (!ends_with($parentDir, '/')) {
+		$parentDir = $parentDir . '/';
+	}
+
+	if (strpos($parentDir, '/') != 0) {
+		$parentDir =  '/' . $parentDir;
+	}
+
+	$parentDir = $baseDir . $parentDir . '/';
+
+	$isWebkitPathAdded = $_POST['isWebkitPathAdded'];
+	if ($isWebkitPathAdded == 'true') {
+		$parentDir = $parentDir . $_POST['webkitRelativePath'] . '/';
+		if (!file_exists($parentDir)) {
+			mkdir($parentDir, 0777, true);
+		}
+	}
+
+	if (strpos($parentDir, '/./') != false || strpos($parentDir, '..') != false) {
+		return;
+	}
+	$filenameOriginal = $_FILES['upload']['name'];
+	rename($target_file.'1', $parentDir . $filenameOriginal );
+	rrmdir($target_file);
 }
 
 if (file_exists($lockPath)) {
@@ -202,6 +205,15 @@ function is_dir_empty($dir) {
 	}
 	closedir($handle); // <-- always clean up! Close the directory stream
 	return 1;
-  }
+}
+
+function ends_with($haystack, $needles) {
+	foreach ((array) $needles as $needle) {
+		if ((string) $needle === substr($haystack, -strlen($needle))) {
+			return true;
+		}
+	}
+	return false;
+}
 
 ?>
