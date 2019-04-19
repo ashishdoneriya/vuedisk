@@ -14,9 +14,6 @@ username - admin , password - admin
 * Generate thumbnails dynamically
 * Fast & smooth navigation
 
-### Drawbacks
-* Not a quite good Mobile UI in potrait mode.
-
 [Download script](https://github.com/ashishdoneriya/php-file-manager/archive/v0.1.1.zip)
 
 ## How to setup?
