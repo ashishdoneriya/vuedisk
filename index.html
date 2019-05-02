@@ -180,7 +180,11 @@
 						</div>
 					</div>
 				</div>
-				<div :span="24" v-if="filesToUpload && filesToUpload.length > 1" style="text-align:right;margin-top:15px"><b><span style="margin-right:5px">{{formatSize(filesToUploadInfo.uploaded)}} / {{formatSize(filesToUploadInfo.totalSize)}}</span></b></div>
+				<div class="clearfix" style="display:flex;align-items:center;margin-bottom:10px;margin-top:15px;">
+					<div v-if="filesToUpload && filesToUpload.length > 0 && filesToUploadInfo.timeRemaining"><span style="margin-right:5px;font-weight:bold">Time Remaining : {{filesToUploadInfo.timeRemaining}} @ {{formatSize(filesToUploadInfo.speed)}} / S</span></div>
+					<div style="flex: 1 1"></div>
+					<div :span="24" v-if="filesToUpload && filesToUpload.length > 1"><span style="margin-right:5px;font-weight:bold">{{formatSize(filesToUploadInfo.uploaded)}} / {{formatSize(filesToUploadInfo.totalSize)}}</span></div>
+				</div>
 				<span slot="footer" class="dialog-footer">
 					<el-button type="primary" @click="closeLocalUploadDialog()">Close</el-button>
 				</span>
@@ -264,7 +268,7 @@
 					audioExtensions: ['mp3'],
 					videoExtensions: ['mp4'],
 					isUploadDirSupported: false,
-					filesToUploadInfo: { 'totalSize': 0, 'uploaded': 0 },
+					filesToUploadInfo: { 'totalSize': 0, 'uploaded': 0, 'timeRemaining': 0, 'speed': 0 },
 					imageExtensions: ["jpeg", "jpg", "JPG", "JPEG", "ase", "art", "bmp", "blp", "cd5", "cit", "cpt", "cr2", "cut", "dds", "dib", "djvu", "egt", "exif", "gif", "gpl", "grf", "icns", "ico", "iff", "jng", "jfif", "jp2", "jps", "lbm", "max", "miff", "mng", "msp", "nitf", "ota", "pbm", "pc1", "pc2", "pc3", "pcf", "pcx", "pdn", "pgm", "PI1", "PI2", "PI3", "pict", "pct", "pnm", "pns", "ppm", "psb", "psd", "pdd", "psp", "px", "pxm", "pxr", "qfx", "raw", "rle", "sct", "sgi", "rgb", "int", "bw", "tga", "tiff", "tif", "vtf", "xbm", "xcf", "xpm", "3dv", "amf", "ai", "awg", "cgm", "cdr", "cmx", "dxf", "e2d", "egt", "eps", "fs", "gbr", "odg", "svg", "stl", "vrml", "x3d", "sxd", "v2d", "vnd", "wmf", "emf", "art", "xar", "png", "webp", "jxr", "hdp", "wdp", "cur", "ecw", "iff", "lbm", "liff", "nrrd", "pam", "pcx", "pgf", "sgi", "rgb", "rgba", "bw", "int", "inta", "sid", "ras", "sun", "tga"]
 				},
 				watch: {
@@ -742,9 +746,13 @@
 										let obj = info.fileInfo;
 										obj.chunksUploaded++;
 										obj.chunksUploading--;
+										obj.bytesUploaded += info.currentChunkSize;
+										this.filesToUploadInfo.uploaded += info.currentChunkSize;
+										this.filesToUploadInfo.speed = (this.threadsRunning * info.currentChunkSize * 1000) / ((new Date()).getTime() - info.time);
+										this.filesToUploadInfo.timeRemaining = parseTime((this.filesToUploadInfo.totalSize - this.filesToUploadInfo.uploaded) / this.filesToUploadInfo.speed);
 										this.threadsRunning--;
 										delete obj.threads[info.index];
-										this.filesToUploadInfo.uploaded += info.currentChunkSize;
+
 									});
 									this.threadsRunning++;
 									return;
@@ -755,6 +763,8 @@
 					clear() {
 						this.filesToUploadInfo.totalSize = 0;
 						this.filesToUploadInfo.uploaded = 0;
+						this.filesToUploadInfo.speed = 0;
+						this.filesToUploadInfo.timeRemaining = '';
 						this.filesToUpload = [];
 						if (this.$refs.folderUploadInputButton) {
 							this.$refs.folderUploadInputButton.value = '';
@@ -767,11 +777,11 @@
 					createFileInfoObject(file) {
 						let size = file.size;
 						let bytesPerChunk = 524288;
-						let totalNoOfChunks = Math.max(Math.ceil(size / bytesPerChunk), 1);
-						if (totalNoOfChunks > 1) {
+						 let totalNoOfChunks = Math.max(Math.ceil(size / bytesPerChunk), 1);
+						/*if (totalNoOfChunks > 1) {
 							totalNoOfChunks--;
 							bytesPerChunk = Math.max(Math.ceil(size / totalNoOfChunks), 1);
-						}
+						} */
 						let fileUniqueId = file.name + (new Date()).getTime();
 						return {
 							parentDir: this.currentDir,
@@ -780,6 +790,7 @@
 							totalNoOfChunks: totalNoOfChunks,
 							chunksUploaded: 0,
 							chunksUploading: 0,
+							bytesUploaded: 0,
 							isPaused: false,
 							threads: {},
 							progressComputed: 0,
@@ -821,16 +832,18 @@
 									this.threads[chunkToUpload]['progress'] = 0.0;
 									this.threads[chunkToUpload]['stop'] = () => {
 										xhr.abort();
-									}
+									};
+									this.threads[chunkToUpload]['currentChunkSize'] = currentChunkSize;
 									xhr.upload.addEventListener('progress', (evt) => {
 										if (evt.lengthComputable) {
 											this.threads[chunkToUpload]['progress'] = evt.loaded / evt.total;
 											this.progressComputed = this.progress();
-											this.uploadInfoText = formatSize(parseInt((this.progressComputed * this.file.size) / 100), this.file.size) + ' / ' + formatSize(this.file.size, this.file.size);
+											this.uploadInfoText = formatSize(this.bytesUploadedTillNow(), this.file.size) + ' / ' + formatSize(this.file.size, this.file.size);
 										}
 									}, false);
 									this.chunksUploading++;
-									xhr.onload = () => resolve({ 'fileInfo': this, 'index': chunkToUpload, 'currentChunkSize': currentChunkSize });
+									let date = new Date();
+									xhr.onload = () => resolve({ 'fileInfo': this, 'index': chunkToUpload, 'currentChunkSize': currentChunkSize, 'time': date.getTime() });
 									xhr.onerror = () => reject(xhr.statusText);
 									xhr.send(fd);
 								});
@@ -856,6 +869,13 @@
 									chunksUploaded += this.threads[key]['progress'];
 								}
 								return parseInt(chunksUploaded * 100 / this.totalNoOfChunks);
+							},
+							bytesUploadedTillNow() {
+								let bytesUploaded = this.bytesUploaded;
+								for (var key in this.threads) {
+									bytesUploaded += this.threads[key]['progress'] * this.threads[key]['currentChunkSize'];
+								}
+								return parseInt(bytesUploaded);
 							}
 						};
 					},
@@ -900,6 +920,19 @@
 					suffix = " Bytes";
 				}
 				return d + suffix;
+			}
+
+			function parseTime(d) {
+				d = parseInt(d);
+				d = Number(d);
+				var h = Math.floor(d / 3600);
+				var m = Math.floor(d % 3600 / 60);
+				var s = Math.floor(d % 3600 % 60);
+
+				var hDisplay = h > 0 ? h + (h == 1 ? " Hour, " : " Hours, ") : "";
+				var mDisplay = m > 0 ? m + (m == 1 ? " Minute, " : " Minutes, ") : "";
+				var sDisplay = s > 0 ? s + (s == 1 ? " Second" : " Seconds") : "";
+				return hDisplay + mDisplay + sDisplay;
 			}
 		</script>
 	</body>
