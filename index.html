@@ -167,6 +167,7 @@
 								<tr>
 									<td>{{fileInfo.file.name}}</td>
 									<td style="text-align:right">
+										{{ fileInfo.uploadInfoText }}
 										<el-button style="padding: 3px 0" v-if="!fileInfo.isUploaded() && fileInfo.isPaused" @click="resumeFileUpload(fileInfo)" type="text">Resume</el-button>
 										<el-button style="padding: 3px 0" v-if="!fileInfo.isUploaded() && !fileInfo.isPaused" @click="stopFileUpload(fileInfo)" type="text">Pause</el-button>
 									</td>
@@ -345,6 +346,7 @@
 				},
 
 				created() {
+					this.isUploadDirSupported = this.isInputDirSupported();
 					this.extractUrlParam();
 					this.isLoggedIn = Cookies.get("LAST_ACTIVITY") ? true : false;
 					if (!this.isLoggedIn) {
@@ -353,7 +355,7 @@
 					}
 					this.isLoggedIn = true;
 					this.refresh();
-					this.isUploadDirSupported = this.isInputDirSupported();
+
 				},
 
 				methods: {
@@ -757,6 +759,10 @@
 						let size = file.size;
 						let bytesPerChunk = 524288;
 						let totalNoOfChunks = Math.max(Math.ceil(size / bytesPerChunk), 1);
+						if (totalNoOfChunks > 1) {
+							totalNoOfChunks--;
+							bytesPerChunk = Math.max(Math.ceil(size / totalNoOfChunks), 1);
+						}
 						let fileUniqueId = file.name + (new Date()).getTime();
 						return {
 							parentDir: this.currentDir,
@@ -769,6 +775,7 @@
 							threads: {},
 							progressComputed: 0,
 							fileUniqueId: fileUniqueId,
+							uploadInfoText: '- / ' + formatSize(this.file.size, this.file.size),
 							canCreatePromise() {
 								if ((this.chunksUploaded + this.chunksUploading) != this.totalNoOfChunks && !this.isPaused) {
 									return true;
@@ -810,6 +817,7 @@
 										if (evt.lengthComputable) {
 											this.threads[chunkToUpload]['progress'] = evt.loaded / evt.total;
 											this.progressComputed = this.progress();
+											this.uploadInfoText = formatSize(parseInt((this.progressComputed * this.file.size) / 100), this.file.size) + ' / ' + formatSize(this.file.size, this.file.size);
 										}
 									}, false);
 									this.chunksUploading++;
@@ -847,6 +855,40 @@
 					}
 				}
 			});
+
+			function formatSize(num, MAX) {
+				let suffix, d = num;
+				if ((d / 1073741824) >= 1) {
+					d = d / 1073741824;
+					// if max values less than 20 GB
+					if (MAX > 21474836480) {
+						d = Math.ceil(d);
+					} else {
+						d = d.toFixed(2);
+					}
+					suffix = " GB";
+				} else if ((d / 1048576) >= 1) {
+					d = d / 1048576;
+					if (MAX > 20971520) {
+						d = Math.ceil(d);
+					} else {
+						d = d.toFixed(1);
+					}
+					suffix = " MB";
+				} else if ((d / 1024) >= 1) {
+					d = d / 1024;
+					if (MAX > 20480) {
+						d = Math.ceil(d);
+					} else {
+						d = d.toFixed(1);
+					}
+					suffix = " KB";
+				} else {
+					d = Math.ceil(d);
+					suffix = " Bytes";
+				}
+				return d + suffix;
+			}
 		</script>
 	</body>
 
