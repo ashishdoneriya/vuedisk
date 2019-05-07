@@ -353,6 +353,9 @@
 				},
 
 				created() {
+
+					this.addListeners();
+
 					this.isUploadDirSupported = this.isInputDirSupported();
 					this.extractUrlParam();
 					this.isLoggedIn = Cookies.get("LAST_ACTIVITY") ? true : false;
@@ -366,6 +369,46 @@
 				},
 
 				methods: {
+
+					addListeners() {
+
+						document.addEventListener('keydown', (event) => {
+							let keyName = event.key;
+
+							if (keyName === 'Control') {
+								// do not alert when only Control key is pressed.
+								return;
+							}
+
+							if (event.ctrlKey) {
+								keyName = keyName.toUpperCase();
+								if (keyName == 'X') {
+									if (this.multipleSelection.length != 0) {
+										this.handleCommand('cut');
+									}
+								} else if (keyName == 'C') {
+									if (this.multipleSelection.length != 0) {
+										this.handleCommand('copy');
+									}
+								} else if (keyName == 'V') {
+									if (this.operation.parentPath.length != 0) {
+										this.handleCommand('paste');
+									}
+								}
+								// Even though event.key is not 'Control' (e.g., 'a' is pressed),
+								// event.ctrlKey may be true if Ctrl key is pressed at the same time.
+								//	alert(`Combination of ctrlKey + ${keyName}`);
+							} else if (keyName == 'Delete') {
+								if (this.multipleSelection.length != 0) {
+									this.handleCommand('delete');
+								}
+							} else if (keyName == 'F2') {
+								if (this.multipleSelection.length == 1) {
+									this.handleCommand('rename');
+								}
+							}
+						}, false);
+					},
 
 					isInputDirSupported() {
 						var tmpInput = document.createElement('input');
