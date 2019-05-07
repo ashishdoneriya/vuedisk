@@ -632,6 +632,7 @@
 						this.$prompt('Please enter new name', {
 							confirmButtonText: 'Ok',
 							cancelButtonText: 'Cancel',
+							inputValue : this.multipleSelection[0]
 						}).then(value => {
 							value = value.value;
 							if (value) {
