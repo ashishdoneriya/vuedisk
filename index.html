@@ -406,6 +406,8 @@
 								if (this.multipleSelection.length == 1) {
 									this.handleCommand('rename');
 								}
+							} else if (event.altKey && keyName == 'N' || keyName == 'n') {
+								this.addDirectory();
 							}
 						}, false);
 					},
