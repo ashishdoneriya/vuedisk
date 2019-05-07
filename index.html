@@ -373,6 +373,9 @@
 					addListeners() {
 
 						document.addEventListener('keydown', (event) => {
+							if (!this.isLoggedIn) {
+								return;
+							}
 							let keyName = event.key;
 
 							if (keyName === 'Control') {
