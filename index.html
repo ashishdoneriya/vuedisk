@@ -1,219 +1,220 @@
 <!DOCTYPE html>
 <html>
 
-	<head>
-		<meta charset="utf-8" />
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>File Manager</title>
-		<meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport" />
-		<meta content="yes" name="apple-mobile-web-app-capable" />
-		<meta content="black" name="apple-mobile-web-app-status-bar-style" />
-		<meta content="telephone=no" name="format-detection" />
-		<link rel="icon" type="image/png" href="/icons/favico.png" />
-		<link rel="stylesheet" href="/css/theme/index.css">
-		<link rel="stylesheet" href="/css/theme/display.css">
-		<link rel="stylesheet" href="/fonts/Roboto/roboto.css">
-		<link rel="stylesheet" href="/css/index.css">
-		<script src="/js/vue.min.js"></script>
-		<script src="/js/elementui.min.js"></script>
-		<script src="/js/element.en.js"></script>
-		<script src="/js/axios.min.js"></script>
-		<script src="/js/cookies.min.js"></script>
-		<script src="/js/vue-lazyload.js"></script>
-		<script src="/js/v-img.min.js"></script>
-	</head>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<title>File Manager</title>
+	<meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport" />
+	<meta content="yes" name="apple-mobile-web-app-capable" />
+	<meta content="black" name="apple-mobile-web-app-status-bar-style" />
+	<meta content="telephone=no" name="format-detection" />
+	<link rel="icon" type="image/png" href="/icons/favico.png" />
+	<link rel="stylesheet" href="/css/theme/index.css">
+	<link rel="stylesheet" href="/css/theme/display.css">
+	<link rel="stylesheet" href="/fonts/Roboto/roboto.css">
+	<link rel="stylesheet" href="/css/index.css">
+	<script src="/js/vue.min.js"></script>
+	<script src="/js/elementui.min.js"></script>
+	<script src="/js/element.en.js"></script>
+	<script src="/js/axios.min.js"></script>
+	<script src="/js/cookies.min.js"></script>
+	<script src="/js/vue-lazyload.js"></script>
+	<script src="/js/v-img.min.js"></script>
+</head>
 
-	<body>
-		<div id="vapp">
-			<!-- First time loader -->
-			<div v-show="firstTimeOpened" class="spinner"></div>
-			<el-row v-cloak v-show="!firstTimeOpened && isLoggedIn == false" type="flex" class="row-bg" justify="center" style="margin-top:100px">
-				<el-col :xs="24" :sm="16" :md="12" :lg="8">
-					<el-card class="box-card">
-						<div slot="header" class="clearfix" style="text-align:center">
-							<span>Login</span>
+<body>
+	<div id="vapp">
+		<!-- First time loader -->
+		<div v-show="firstTimeOpened" class="spinner"></div>
+		<el-row v-cloak v-show="!firstTimeOpened && isLoggedIn == false" type="flex" class="row-bg" justify="center" style="margin-top:100px">
+			<el-col :xs="24" :sm="16" :md="12" :lg="8">
+				<el-card class="box-card">
+					<div slot="header" class="clearfix" style="text-align:center">
+						<span>Login</span>
+					</div>
+					<el-form :label-position="'left'" label-width="80px" @submit.prevent.native>
+						<el-form-item label="Username">
+							<el-input v-model="username" @keyup.enter.native="login" type="text"></el-input>
+						</el-form-item>
+						<el-form-item label="Password">
+							<el-input v-model="password" @keyup.enter.native="login" type="password"></el-input>
+						</el-form-item>
+						<el-form-item>
+							<el-button type="primary" @click="login" @keyup.enter="login">Login</el-button>
+						</el-form-item>
+					</el-form>
+				</el-card>
+			</el-col>
+		</el-row>
+		<el-container v-cloak class="container" v-bind:style="{maxWidth : pageWidth}" v-show="!firstTimeOpened && isLoggedIn == true">
+			<el-header class="text-center" style="margin-top:20px;margin-bottom:30px">
+				<h1>File Manager
+					<span style="float:right;cursor: pointer;font-size:14px; font-weight: normal" @click="logout()">Logout</span>
+				</h1>
+			</el-header>
+			<el-main>
+				<el-row type="flex" class="row-bg" justify="space-between">
+					<el-col>
+						<el-button size="small" @click="openLocalUploadDialog()" type="primary" icon="el-icon-upload">Upload</el-button>
+						<el-button type="primary" @click="openRemoteUploadDialog()" size="small" icon="el-icon-upload">Remote Upload</el-button>
+						<el-dropdown style="margin-left:10px" split-button type="primary" size="small" trigger="click" @command="handleCommand">
+							Actions
+							<el-dropdown-menu slot="dropdown">
+								<el-dropdown-item command="cut" :disabled="multipleSelection.length == 0">Cut</el-dropdown-item>
+								<el-dropdown-item command="copy" :disabled="multipleSelection.length == 0">Copy</el-dropdown-item>
+								<el-dropdown-item command="paste" :disabled="operation.parentPath.length == 0">Paste</el-dropdown-item>
+								<el-dropdown-item command="delete" :disabled="multipleSelection.length == 0">Delete</el-dropdown-item>
+								<el-dropdown-item command="rename" :disabled="multipleSelection.length != 1">Rename</el-dropdown-item>
+								<el-dropdown-item command="size" :disabled="multipleSelection.length == 0">Get Size</el-dropdown-item>
+							</el-dropdown-menu>
+						</el-dropdown>
+						<div style="display: inline-block">
+							<el-radio-group v-model="displayMode" size="small" style="margin-left:10px">
+								<el-radio label="list" border>List</el-radio>
+								<el-radio label="gallery" border>Gallery</el-radio>
+							</el-radio-group>
 						</div>
-						<el-form :label-position="'left'" label-width="80px" @submit.prevent.native>
-							<el-form-item label="Username">
-								<el-input v-model="username" @keyup.enter.native="login" type="text"></el-input>
-							</el-form-item>
-							<el-form-item label="Password">
-								<el-input v-model="password" @keyup.enter.native="login" type="password"></el-input>
-							</el-form-item>
-							<el-form-item>
-								<el-button type="primary" @click="login" @keyup.enter="login">Login</el-button>
-							</el-form-item>
-						</el-form>
-					</el-card>
-				</el-col>
-			</el-row>
-			<el-container v-cloak class="container" v-bind:style="{maxWidth : pageWidth}" v-show="!firstTimeOpened && isLoggedIn == true">
-				<el-header class="text-center" style="margin-top:20px;margin-bottom:30px">
-					<h1>File Manager
-						<span style="float:right;cursor: pointer;font-size:14px; font-weight: normal" @click="logout()">Logout</span>
-					</h1>
-				</el-header>
-				<el-main>
-					<el-row type="flex" class="row-bg" justify="space-between">
-						<el-col>
-							<el-button size="small" @click="openLocalUploadDialog()" type="primary" icon="el-icon-upload">Upload</el-button>
-							<el-button type="primary" @click="openRemoteUploadDialog()" size="small" icon="el-icon-upload">Remote Upload</el-button>
-							<el-dropdown style="margin-left:10px" split-button type="primary" size="small" trigger="click" @command="handleCommand">
-								Actions
-								<el-dropdown-menu slot="dropdown">
-									<el-dropdown-item command="cut" :disabled="multipleSelection.length == 0">Cut</el-dropdown-item>
-									<el-dropdown-item command="copy" :disabled="multipleSelection.length == 0">Copy</el-dropdown-item>
-									<el-dropdown-item command="paste" :disabled="operation.parentPath.length == 0">Paste</el-dropdown-item>
-									<el-dropdown-item command="delete" :disabled="multipleSelection.length == 0">Delete</el-dropdown-item>
-									<el-dropdown-item command="rename" :disabled="multipleSelection.length != 1">Rename</el-dropdown-item>
-									<el-dropdown-item command="size" :disabled="multipleSelection.length == 0">Get Size</el-dropdown-item>
-								</el-dropdown-menu>
-							</el-dropdown>
-							<div style="display: inline-block">
-								<el-radio-group v-model="displayMode" size="small" style="margin-left:10px">
-									<el-radio label="list" border>List</el-radio>
-									<el-radio label="gallery" border>Gallery</el-radio>
-								</el-radio-group>
-							</div>
-							<i class="el-icon-refresh" style="font-weight: bold;margin-left: 10px;font-size: 20px" @click="refresh()"></i>
-							<el-button style="float:right" type="primary" @click="addDirectory()" size="small" icon="el-icon-plus">New Folder</el-button>
-						</el-col>
-					</el-row>
-					<el-row style="margin: 25px 0">
-						<el-col :span="24">
-							<el-breadcrumb separator-class="el-icon-arrow-right">
-								<el-breadcrumb-item>
-									<a @click="openDir('/')">Home</a>
-								</el-breadcrumb-item>
-								<el-breadcrumb-item v-for="(dir, index) in stack">
-									<a @click="openStack(index)">{{dir}}</a>
-								</el-breadcrumb-item>
-							</el-breadcrumb>
-						</el-col>
-					</el-row>
-					<el-row type="flex" class="row-bg" justify="center">
-						<el-col :span="24">
-							<el-card v-show="displayMode == 'list'">
-								<el-table ref="multipleTable" :data="tableDataFinal" v-loading="isTableLoading" style="width: 100%" @selection-change="handleSelectionChange" size="medium" highlight-current-row>
-									<el-table-column type="selection" style="padding-left:0px !important" width="30">
-									</el-table-column>
-									<el-table-column label="Name">
-										<template slot-scope="scope">
+						<i class="el-icon-refresh" style="font-weight: bold;margin-left: 10px;font-size: 20px" @click="refresh()"></i>
+						<el-button style="float:right" type="primary" @click="addDirectory()" size="small" icon="el-icon-plus">New Folder</el-button>
+					</el-col>
+				</el-row>
+				<el-row style="margin: 25px 0">
+					<el-col :span="24">
+						<el-breadcrumb separator-class="el-icon-arrow-right">
+							<el-breadcrumb-item>
+								<a @click="openDir('/')">Home</a>
+							</el-breadcrumb-item>
+							<el-breadcrumb-item v-for="(dir, index) in stack">
+								<a @click="openStack(index)">{{dir}}</a>
+							</el-breadcrumb-item>
+						</el-breadcrumb>
+					</el-col>
+				</el-row>
+				<el-row type="flex" class="row-bg" justify="center">
+					<el-col :span="24">
+						<el-card v-show="displayMode == 'list'">
+							<el-table ref="multipleTable" :data="tableDataFinal" v-loading="isTableLoading" style="width: 100%" @selection-change="handleSelectionChange" size="medium" highlight-current-row>
+								<el-table-column type="selection" style="padding-left:0px !important" width="30">
+								</el-table-column>
+								<el-table-column label="Name">
+									<template slot-scope="scope">
 											<span v-if="scope.row.isDir" class="fonts" style="font-weight: 500;" @click="openDirFromList(scope.row.name)">{{ scope.row.name }}</span>
 											<span v-if="!scope.row.isDir" class="fonts" @click="download(scope.row.name)">{{ scope.row.name }}</span>
 										</template>
-									</el-table-column>
-									<el-table-column v-if="!isMobile" align="right" width="80">
-										<template slot-scope="scope">
+								</el-table-column>
+								<el-table-column v-if="!isMobile" align="right" width="80">
+									<template slot-scope="scope">
 											<el-button v-if="!scope.row.isDir && isAudio(scope.row.name)" size="mini" @click="playAudio(scope.row.name)" style="margin-right:10px">Play</el-button>
 											<el-button v-if="!scope.row.isDir && isVideo(scope.row.name)" size="mini" @click="playVideo(scope.row.name)" style="margin-right:10px">Play</el-button>
 											<span v-if="!scope.row.isDir" style="margin-right: 10px">{{ scope.row.size }}</span>
 										</template>
-									</el-table-column>
-								</el-table>
-								<el-row type="flex" align="middle" class="row-bg" justify="space-between" style="margin-top: 20px">
-									<el-col style="text-align:right">
-										<el-checkbox v-model="hiddenFiles">Show Hidden Files</el-checkbox>
-									</el-col>
-								</el-row>
-							</el-card>
-							<div v-if="displayMode == 'gallery'">
-								<el-row style="margin-bottom:20px" v-if="totalCurrentDirs > 0">
-									<span style="font-family:Roboto;font-size:18px;font-weight:400;color:#555">Folders
+								</el-table-column>
+							</el-table>
+							<el-row type="flex" align="middle" class="row-bg" justify="space-between" style="margin-top: 20px">
+								<el-col style="text-align:right">
+									<el-checkbox v-model="hiddenFiles">Show Hidden Files</el-checkbox>
+								</el-col>
+							</el-row>
+						</el-card>
+						<div v-if="displayMode == 'gallery'">
+							<el-row style="margin-bottom:20px" v-if="totalCurrentDirs > 0">
+								<span style="font-family:Roboto;font-size:18px;font-weight:400;color:#555">Folders
 									</span>
-								</el-row>
-								<el-row v-if="totalCurrentDirs > 0">
-									<div v-for="row of this.tableDataFinal" @click="openDirFromList(row.name)" style="display: inline-block;margin:10px;cursor:pointer">
-										<div v-if="row.isDir" :title="row.name" style="width:200px;height:50px;border:1px solid #eee;font-size:13px;color:#444;padding-left:5px;margin:5px;border-radius:5px;display:table-cell;vertical-align:middle">
-											<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:20px;height:20px;fill:#555;margin:0 auto;margin-right:5px;float:left">
+							</el-row>
+							<el-row v-if="totalCurrentDirs > 0">
+								<div v-for="row of this.tableDataFinal" @click="openDirFromList(row.name)" style="display: inline-block;margin:10px;cursor:pointer">
+									<div v-if="row.isDir" :title="row.name" style="width:200px;height:50px;border:1px solid #eee;font-size:13px;color:#444;padding-left:5px;margin:5px;border-radius:5px;display:table-cell;vertical-align:middle">
+										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:20px;height:20px;fill:#555;margin:0 auto;margin-right:5px;float:left">
 												<path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
 												<path d="M0 0h24v24H0z" fill="none" />
 											</svg>
-											<span style="display:inline-block;vertical-align:middle;font-size:15px;line-height:20px;color:#555;font-weight:500;max-width:175px;overflow:hidden;text-overflow:ellipsis;max-height:40px">{{row.name}}</span>
-										</div>
+										<span style="display:inline-block;vertical-align:middle;font-size:15px;line-height:20px;color:#555;font-weight:500;max-width:175px;overflow:hidden;text-overflow:ellipsis;max-height:40px">{{row.name}}</span>
 									</div>
-								</el-row>
-								<el-row style="margin-bottom:20px" v-if="totalCurrentFiles > 0">
-									<span style="font-family:Roboto;font-size:18px;font-weight:400;color:#555">Files
+								</div>
+							</el-row>
+							<el-row style="margin-bottom:20px" v-if="totalCurrentFiles > 0">
+								<span style="font-family:Roboto;font-size:18px;font-weight:400;color:#555">Files
 									</span>
-								</el-row>
-								<el-row v-if="totalCurrentFiles > 0" style="display: flex;flex-wrap: wrap;flex-flow: row wrap;justify-content: center;">
-									<img v-for="row of this.tableDataFinal" v-if="!row.isDir" v-lazy="'/apis/thumbnail.php?type=small&name=' + row.name + '&parent=' + encodeURIComponent(currentDir)" v-img="{group :  'gallery', title: row.name, src : '/apis/thumbnail.php?type=large&name=' + row.name + '&parent=' + encodeURIComponent(currentDir), sourceButton: 'true', sourceButtonDownloadLink: '/apis/download.php?path=' + (currentDir == '/' ? '/' : encodeURIComponent(currentDir) + '/') + row.name}" style="height:200px;margin: 5px;float:left" :title="row.name">
-								</el-row>
-							</div>
-						</el-col>
-					</el-row>
-				</el-main>
-			</el-container>
-			<el-dialog v-cloak title="File(s) Upload" :visible.sync="localFileUploadDialog">
-
-				<div class="clearfix" style="display:flex;align-items:center;margin-bottom:10px">
-					<div class="upload-btn-wrapper" v-if="isUploadDirSupported">
-						<el-button type="primary" @click="openFolderUploadDialog()">Add Folder</el-button>
-						<input type="file" id="file" ref="folderUploadInputButton" webkitdirectory multiple @change="addFolderToUpload()" />
-					</div>
-					<div class="upload-btn-wrapper" style="margin-left:20px">
-						<el-button type="primary" @click="openFileUploadDialog()">Add Files</el-button>
-						<input type="file" id="file" ref="fileUploadInputButton" multiple @change="addFilesToUpload()" />
-					</div>
-					<div style="flex: 1 1"></div>
-					<div :span="24" v-if="filesToUpload && filesToUpload.length > 0"><b><span style="margin-right:5px">{{filesUploaded}} of {{filesToUpload.length}}</span><span>Files Uploaded</span></b></div>
-				</div>
-
-				<div style="max-height:250px;overflow-y:auto;overflow-x:hidden">
-					<div class="row-bg" v-for="fileInfo in filesToUpload" :key="fileInfo.file" style="margin-bottom:5px">
-						<div :span="24">
-							<table style="width:100%">
-								<tr>
-									<td>{{fileInfo.file.name}}</td>
-									<td style="text-align:right">
-										{{ fileInfo.uploadInfoText }}
-										<el-button style="padding: 3px 0" v-if="!fileInfo.isUploaded() && fileInfo.isPaused" @click="resumeFileUpload(fileInfo)" type="text">Resume</el-button>
-										<el-button style="padding: 3px 0" v-if="!fileInfo.isUploaded() && !fileInfo.isPaused" @click="stopFileUpload(fileInfo)" type="text">Pause</el-button>
-									</td>
-								</tr>
-							</table>
+							</el-row>
+							<el-row v-if="totalCurrentFiles > 0" style="display: flex;flex-wrap: wrap;flex-flow: row wrap;justify-content: center;">
+								<img v-for="row of this.tableDataFinal" v-if="!row.isDir" v-lazy="'/apis/thumbnail.php?type=small&name=' + row.name + '&parent=' + encodeURIComponent(currentDir)" v-img="{group :  'gallery', title: row.name, src : '/apis/thumbnail.php?type=large&name=' + row.name + '&parent=' + encodeURIComponent(currentDir), sourceButton: 'true', sourceButtonDownloadLink: '/apis/download.php?path=' + (currentDir == '/' ? '/' : encodeURIComponent(currentDir) + '/') + row.name}"
+									style="height:200px;margin: 5px;float:left" :title="row.name">
+							</el-row>
 						</div>
-						<div :span="24">
-							<el-progress v-if="fileInfo.isUploaded()" :percentage="100" status="success"></el-progress>
-							<el-progress v-else :percentage="fileInfo.progressComputed"></el-progress>
-						</div>
+					</el-col>
+				</el-row>
+			</el-main>
+		</el-container>
+		<el-dialog v-cloak title="File(s) Upload" :visible.sync="localFileUploadDialog">
+
+			<div class="clearfix" style="display:flex;align-items:center;margin-bottom:10px">
+				<div class="upload-btn-wrapper" v-if="isUploadDirSupported">
+					<el-button type="primary" @click="openFolderUploadDialog()">Add Folder</el-button>
+					<input type="file" id="file" ref="folderUploadInputButton" webkitdirectory multiple @change="addFolderToUpload()" />
+				</div>
+				<div class="upload-btn-wrapper" style="margin-left:20px">
+					<el-button type="primary" @click="openFileUploadDialog()">Add Files</el-button>
+					<input type="file" id="file" ref="fileUploadInputButton" multiple @change="addFilesToUpload()" />
+				</div>
+				<div style="flex: 1 1"></div>
+				<div :span="24" v-if="filesToUpload && filesToUpload.length > 0"><b><span style="margin-right:5px">{{filesUploaded}} of {{filesToUpload.length}}</span><span>Files Uploaded</span></b></div>
+			</div>
+
+			<div style="max-height:250px;overflow-y:auto;overflow-x:hidden">
+				<div class="row-bg" v-for="fileInfo in filesToUpload" :key="fileInfo.file" style="margin-bottom:5px">
+					<div :span="24">
+						<table style="width:100%">
+							<tr>
+								<td>{{fileInfo.file.name}}</td>
+								<td style="text-align:right">
+									{{ fileInfo.uploadInfoText }}
+									<el-button style="padding: 3px 0" v-if="!fileInfo.isUploaded() && fileInfo.isPaused" @click="resumeFileUpload(fileInfo)" type="text">Resume</el-button>
+									<el-button style="padding: 3px 0" v-if="!fileInfo.isUploaded() && !fileInfo.isPaused" @click="stopFileUpload(fileInfo)" type="text">Pause</el-button>
+								</td>
+							</tr>
+						</table>
+					</div>
+					<div :span="24">
+						<el-progress v-if="fileInfo.isUploaded()" :percentage="100" status="success"></el-progress>
+						<el-progress v-else :percentage="fileInfo.progressComputed"></el-progress>
 					</div>
 				</div>
-				<div class="clearfix" style="display:flex;align-items:center;margin-bottom:10px;margin-top:15px;">
-					<div v-if="filesToUpload && filesToUpload.length > 0 && filesUploaded < filesToUpload.length && filesToUploadInfo.timeRemaining"><span style="margin-right:5px;font-weight:bold">Time Remaining : {{filesToUploadInfo.timeRemaining}} @ {{formatSize(filesToUploadInfo.speed)}} / S</span></div>
-					<div style="flex: 1 1"></div>
-					<div :span="24" v-if="filesToUpload && filesToUpload.length > 1"><span style="margin-right:5px;font-weight:bold">{{formatSize(filesToUploadInfo.uploaded)}} / {{formatSize(filesToUploadInfo.totalSize)}}</span></div>
-				</div>
-				<span slot="footer" class="dialog-footer">
+			</div>
+			<div class="clearfix" style="display:flex;align-items:center;margin-bottom:10px;margin-top:15px;">
+				<div v-if="filesToUpload && filesToUpload.length > 0 && filesUploaded < filesToUpload.length && filesToUploadInfo.timeRemaining"><span style="margin-right:5px;font-weight:bold">Time Remaining : {{filesToUploadInfo.timeRemaining}} @ {{formatSize(filesToUploadInfo.speed)}} / S</span></div>
+				<div style="flex: 1 1"></div>
+				<div :span="24" v-if="filesToUpload && filesToUpload.length > 1"><span style="margin-right:5px;font-weight:bold">{{formatSize(filesToUploadInfo.uploaded)}} / {{formatSize(filesToUploadInfo.totalSize)}}</span></div>
+			</div>
+			<span slot="footer" class="dialog-footer">
 					<el-button type="primary" @click="closeLocalUploadDialog()">Close</el-button>
 				</span>
-			</el-dialog>
-			<el-dialog v-cloak title="Remote File Upload" :visible.sync="remoteUploadDialog">
-				<el-form>
-					<el-form-item label="File Url" label-width="150">
-						<el-input v-model="remoteUrl" auto-complete="off"></el-input>
-					</el-form-item>
-					<el-form-item label="Name" label-width="150">
-						<el-input v-model="remoteUrlName" auto-complete="off"></el-input>
-					</el-form-item>
-				</el-form>
-				<span slot="footer" class="dialog-footer">
+		</el-dialog>
+		<el-dialog v-cloak title="Remote File Upload" :visible.sync="remoteUploadDialog">
+			<el-form>
+				<el-form-item label="File Url" label-width="150">
+					<el-input v-model="remoteUrl" auto-complete="off"></el-input>
+				</el-form-item>
+				<el-form-item label="Name" label-width="150">
+					<el-input v-model="remoteUrlName" auto-complete="off"></el-input>
+				</el-form-item>
+			</el-form>
+			<span slot="footer" class="dialog-footer">
 					<el-button @click="remoteUploadDialog = false;refresh()">Cancel</el-button>
 					<el-button type="primary" @click="remoteUpload()">Upload</el-button>
 				</span>
-			</el-dialog>
-			<el-dialog v-cloak :visible.sync="displayVideoPlayer">
-				<div style="width:100%;margin:0 auto;text-align:center">
-					<video width="400" controls ref="videoPlayer">
+		</el-dialog>
+		<el-dialog v-cloak :visible.sync="displayVideoPlayer">
+			<div style="width:100%;margin:0 auto;text-align:center">
+				<video width="400" controls ref="videoPlayer">
 						<source :src="videoSource" type="video/mp4"> Your browser does not support HTML5 video.
 					</video>
-				</div>
-				<span slot="footer" class="dialog-footer">
+			</div>
+			<span slot="footer" class="dialog-footer">
 					<el-button type="primary" @click="closeVideoPlayer()">Close</el-button>
 				</span>
-			</el-dialog>
-			<div v-cloak v-if="displayAudioPlayer && !firstTimeOpened" style="
+		</el-dialog>
+		<div v-cloak v-if="displayAudioPlayer && !firstTimeOpened" style="
 				position:fixed;
 				bottom:0;
 				width:100%;
@@ -223,778 +224,791 @@
 				text-align:center;
 				background: rgba(0, 0, 0, 0.1);
 				z-index:1000;">
-				<audio controls style="width:700px;" ref="audioPlayer">
+			<audio controls style="width:700px;" ref="audioPlayer">
 					<source :src="audioSource" /> Your browser does not support the audio element.
 				</audio>
-				<span style="position:absolute;color:black;padding-left:30px;top:18px;font-weight:bold;cursor:pointer" title="close" @click="closeAudioPlayer()">X</span>
-			</div>
+			<span style="position:absolute;color:black;padding-left:30px;top:18px;font-weight:bold;cursor:pointer" title="close" @click="closeAudioPlayer()">X</span>
 		</div>
-		<script>
-			ELEMENT.locale(ELEMENT.lang.en);
-			Vue.use(VueLazyload);
-			new Vue({
-				el: '#vapp',
-				data: {
-					audioSource: '',
-					currentDir: '/',
-					dirBeforeLogout: '',
-					displayAudioPlayer: false,
-					displayMode: 'list',
-					displayVideoPlayer: false,
-					firstTimeOpened: true,
-					hiddenFiles: false,
-					isLoggedIn: Cookies.get("LAST_ACTIVITY") ? true : false,
-					isTableLoading: true,
-					localFileUploadDialog: false,
-					multipleSelection: [],
-					operation: {
-						type: '',
-						parentPath: '',
-						selectedFiles: ''
-					},
-					password: '',
-					remoteUploadDialog: false,
-					remoteUrl: '',
-					remoteUrlName: '',
-					tableData: [],
-					totalCurrentDirs: 0,
-					totalCurrentFiles: 0,
-					uploadFilesList: [],
-					username: '',
-					videoSource: '',
-					filesToUpload: [],
-					maxThreads: 4,
-					threadsRunning: 0,
-					audioExtensions: ['mp3'],
-					videoExtensions: ['mp4'],
-					speedArray: [],
-					isUploadDirSupported: false,
-					filesToUploadInfo: { 'totalSize': 0, 'uploaded': 0, 'timeRemaining': 0, 'speed': 0 },
-					imageExtensions: ["jpeg", "jpg", "JPG", "JPEG", "ase", "art", "bmp", "blp", "cd5", "cit", "cpt", "cr2", "cut", "dds", "dib", "djvu", "egt", "exif", "gif", "gpl", "grf", "icns", "ico", "iff", "jng", "jfif", "jp2", "jps", "lbm", "max", "miff", "mng", "msp", "nitf", "ota", "pbm", "pc1", "pc2", "pc3", "pcf", "pcx", "pdn", "pgm", "PI1", "PI2", "PI3", "pict", "pct", "pnm", "pns", "ppm", "psb", "psd", "pdd", "psp", "px", "pxm", "pxr", "qfx", "raw", "rle", "sct", "sgi", "rgb", "int", "bw", "tga", "tiff", "tif", "vtf", "xbm", "xcf", "xpm", "3dv", "amf", "ai", "awg", "cgm", "cdr", "cmx", "dxf", "e2d", "egt", "eps", "fs", "gbr", "odg", "svg", "stl", "vrml", "x3d", "sxd", "v2d", "vnd", "wmf", "emf", "art", "xar", "png", "webp", "jxr", "hdp", "wdp", "cur", "ecw", "iff", "lbm", "liff", "nrrd", "pam", "pcx", "pgf", "sgi", "rgb", "rgba", "bw", "int", "inta", "sid", "ras", "sun", "tga"]
+	</div>
+	<script>
+		ELEMENT.locale(ELEMENT.lang.en);
+		Vue.use(VueLazyload);
+		new Vue({
+			el: '#vapp',
+			data: {
+				audioSource: '',
+				currentDir: '/',
+				dirBeforeLogout: '',
+				displayAudioPlayer: false,
+				displayMode: 'list',
+				displayVideoPlayer: false,
+				firstTimeOpened: true,
+				hiddenFiles: false,
+				isLoggedIn: Cookies.get("LAST_ACTIVITY") ? true : false,
+				isTableLoading: true,
+				localFileUploadDialog: false,
+				multipleSelection: [],
+				operation: {
+					type: '',
+					parentPath: '',
+					selectedFiles: ''
 				},
-				watch: {
-					audioSource() {
-						this.$refs['audioPlayer'].load();
-					},
-					videoSource() {
-						this.$refs['videoPlayer'].load();
-					},
-					threadsRunning() {
-						this.addThread();
+				password: '',
+				remoteUploadDialog: false,
+				remoteUrl: '',
+				remoteUrlName: '',
+				tableData: [],
+				totalCurrentDirs: 0,
+				totalCurrentFiles: 0,
+				uploadFilesList: [],
+				username: '',
+				videoSource: '',
+				filesToUpload: [],
+				maxThreads: 4,
+				threadsRunning: 0,
+				audioExtensions: ['mp3'],
+				videoExtensions: ['mp4'],
+				speedArray: [],
+				isUploadDirSupported: false,
+				filesToUploadInfo: {
+					'totalSize': 0,
+					'uploaded': 0,
+					'timeRemaining': 0,
+					'speed': 0
+				},
+				imageExtensions: ["jpeg", "jpg", "JPG", "JPEG", "ase", "art", "bmp", "blp", "cd5", "cit", "cpt", "cr2", "cut", "dds", "dib", "djvu", "egt", "exif", "gif", "gpl", "grf", "icns", "ico", "iff", "jng", "jfif", "jp2", "jps", "lbm", "max", "miff", "mng", "msp", "nitf", "ota", "pbm", "pc1", "pc2", "pc3", "pcf", "pcx", "pdn", "pgm", "PI1", "PI2", "PI3", "pict", "pct", "pnm", "pns", "ppm", "psb", "psd", "pdd", "psp", "px", "pxm", "pxr", "qfx", "raw", "rle", "sct", "sgi", "rgb", "int", "bw", "tga", "tiff", "tif", "vtf", "xbm", "xcf", "xpm", "3dv", "amf", "ai", "awg", "cgm", "cdr", "cmx", "dxf", "e2d", "egt", "eps", "fs", "gbr", "odg", "svg", "stl", "vrml", "x3d", "sxd", "v2d", "vnd", "wmf", "emf", "art", "xar", "png", "webp", "jxr", "hdp", "wdp", "cur", "ecw", "iff", "lbm", "liff", "nrrd", "pam", "pcx", "pgf", "sgi", "rgb", "rgba", "bw", "int", "inta", "sid", "ras", "sun", "tga"]
+			},
+			watch: {
+				audioSource() {
+					this.$refs['audioPlayer'].load();
+				},
+				videoSource() {
+					this.$refs['videoPlayer'].load();
+				},
+				threadsRunning() {
+					this.addThread();
+				}
+			},
+			computed: {
+
+				filesUploaded() {
+					let count = 0;
+					for (let fileToUpload of this.filesToUpload) {
+						if (fileToUpload.isUploaded()) {
+							count++;
+						}
 					}
-				},
-				computed: {
-
-					filesUploaded() {
-						let count = 0;
-						for (let fileToUpload of this.filesToUpload) {
-							if (fileToUpload.isUploaded()) {
-								count++;
-							}
-						}
-						return count;
-					},
-
-					isMobile() {
-						if (screen.width <= 760) {
-							return true;
-						}
-						else {
-							return false;
-						}
-					},
-
-					stack() {
-						var substring = this.currentDir;
-						if (this.currentDir == '/') {
-							return [];
-						}
-						substring = substring.substring(1);
-						return substring.split('/');
-					},
-
-					pageWidth() {
-						if (this.displayMode == 'gallery') {
-							return 'calc(100% - 120px)';
-						}
-						return '900px';
-					},
-
-					tableDataFinal() {
-						this.totalCurrentFiles = 0;
-						this.totalCurrentDirs = 0;
-						var arrDir = [];
-						for (var temp of this.tableData) {
-							if (temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
-								this.totalCurrentDirs++;
-								arrDir.push(temp);
-							}
-						}
-
-						var arrFile = [];
-						for (var temp of this.tableData) {
-							if (!temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
-								if (this.displayMode == 'list' || (this.displayMode == 'gallery' && this.isImage(temp.name))) {
-									this.totalCurrentFiles++;
-									arrFile.push(temp);
-								}
-							}
-						}
-
-						arrDir.sort((o1, o2) => {
-							return o1.name.localeCompare(o2.name);
-						});
-						arrFile.sort((o1, o2) => {
-							return o1.name.localeCompare(o2.name);
-						});
-						return arrDir.concat(arrFile);
-					}
-
+					return count;
 				},
 
-				created() {
-
-					this.addListeners();
-
-					this.isUploadDirSupported = this.isInputDirSupported();
-					this.extractUrlParam();
-					this.isLoggedIn = Cookies.get("LAST_ACTIVITY") ? true : false;
-					if (!this.isLoggedIn) {
-						this.firstTimeOpened = false;
-						return;
-					}
-					this.isLoggedIn = true;
-					this.refresh();
-
-				},
-
-				methods: {
-
-					addListeners() {
-
-						document.addEventListener('keydown', (event) => {
-							if (!this.isLoggedIn) {
-								return;
-							}
-							let keyName = event.key;
-
-							if (keyName === 'Control') {
-								// do not alert when only Control key is pressed.
-								return;
-							}
-
-							if (event.ctrlKey) {
-								keyName = keyName.toUpperCase();
-								if (keyName == 'X') {
-									if (this.multipleSelection.length != 0) {
-										this.handleCommand('cut');
-									}
-								} else if (keyName == 'C') {
-									if (this.multipleSelection.length != 0) {
-										this.handleCommand('copy');
-									}
-								} else if (keyName == 'V') {
-									if (this.operation.parentPath.length != 0) {
-										this.handleCommand('paste');
-									}
-								}
-								// Even though event.key is not 'Control' (e.g., 'a' is pressed),
-								// event.ctrlKey may be true if Ctrl key is pressed at the same time.
-								//	alert(`Combination of ctrlKey + ${keyName}`);
-							} else if (keyName == 'Delete') {
-								if (this.multipleSelection.length != 0) {
-									this.handleCommand('delete');
-								}
-							} else if (keyName == 'F2') {
-								if (this.multipleSelection.length == 1) {
-									this.handleCommand('rename');
-								}
-							} else if (event.altKey && keyName == 'N' || keyName == 'n') {
-								this.addDirectory();
-							}
-						}, false);
-					},
-
-					isInputDirSupported() {
-						var tmpInput = document.createElement('input');
-						if ('webkitdirectory' in tmpInput
-							|| 'mozdirectory' in tmpInput
-							|| 'odirectory' in tmpInput
-							|| 'msdirectory' in tmpInput
-							|| 'directory' in tmpInput) return true;
+				isMobile() {
+					if (screen.width <= 760) {
+						return true;
+					} else {
 						return false;
-					},
+					}
+				},
 
-					openFileUploadDialog() {
-						this.$refs.fileUploadInputButton.click();
-					},
+				stack() {
+					var substring = this.currentDir;
+					if (this.currentDir == '/') {
+						return [];
+					}
+					substring = substring.substring(1);
+					return substring.split('/');
+				},
 
-					openFolderUploadDialog() {
-						this.$refs.folderUploadInputButton.click();
-					},
+				pageWidth() {
+					if (this.displayMode == 'gallery') {
+						return 'calc(100% - 120px)';
+					}
+					return '900px';
+				},
 
-					addFilesToUpload() {
-						this.showUploadProgress = false;
-						for (let file of this.$refs.fileUploadInputButton.files) {
-							this.filesToUploadInfo.totalSize += file.size;
-							this.filesToUpload.push(this.createFileInfoObject(file));
+				tableDataFinal() {
+					this.totalCurrentFiles = 0;
+					this.totalCurrentDirs = 0;
+					var arrDir = [];
+					for (var temp of this.tableData) {
+						if (temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
+							this.totalCurrentDirs++;
+							arrDir.push(temp);
 						}
+					}
 
-						this.addThread();
-					},
-
-					addFolderToUpload() {
-						this.showUploadProgress = false;
-						for (let file of this.$refs.folderUploadInputButton.files) {
-							this.filesToUploadInfo.totalSize += file.size;
-							this.filesToUpload.push(this.createFileInfoObject(file));
-						}
-						this.addThread();
-					},
-
-					playAudio(name) {
-						this.displayAudioPlayer = true;
-						this.audioSource = '/apis/download.php?path=' + (this.currentDir == '/' ? '/' : encodeURIComponent(this.currentDir) + '/') + name;
-					},
-
-					playVideo(name) {
-						this.displayVideoPlayer = true;
-						this.videoSource = '/apis/download.php?path=' + (this.currentDir == '/' ? '/' : encodeURIComponent(this.currentDir) + '/') + name;
-					},
-
-					closeAudioPlayer() {
-						this.displayAudioPlayer = false;
-						this.audioSource = '';
-						this.$refs.audioPlayer.load();
-					},
-
-					closeVideoPlayer() {
-						this.displayVideoPlayer = false;
-						this.videoSource = '';
-						this.$refs.videoPlayer.load();
-					},
-
-					isImage(name) {
-						return this.imageExtensions.indexOf(name.substring(name.lastIndexOf('.') + 1)) != -1;
-					},
-
-					isAudio(name) {
-						return this.audioExtensions.indexOf(name.substring(name.lastIndexOf('.') + 1)) != -1;
-					},
-
-					isVideo(name) {
-						return this.videoExtensions.indexOf(name.substring(name.lastIndexOf('.') + 1)) != -1;
-					},
-
-					extractUrlParam() {
-						var paramsPath = location.search.substring(1);
-						if (paramsPath) {
-							var parameters = paramsPath.split("&");
-							if (parameters.length > 0) {
-								var firstParam = paramsPath;
-								if (firstParam.indexOf('=') != -1) {
-									firstParamVal = firstParam.split('=')[1];
-									if (firstParamVal) {
-										firstParamVal = unescape(firstParamVal);
-										if (firstParamVal) {
-											this.currentDir = firstParamVal;
-										}
-									}
-								}
+					var arrFile = [];
+					for (var temp of this.tableData) {
+						if (!temp.isDir && (this.hiddenFiles || !temp.name.startsWith('.'))) {
+							if (this.displayMode == 'list' || (this.displayMode == 'gallery' && this.isImage(temp.name))) {
+								this.totalCurrentFiles++;
+								arrFile.push(temp);
 							}
 						}
-					},
+					}
 
-					login() {
+					arrDir.sort((o1, o2) => {
+						return o1.name.localeCompare(o2.name);
+					});
+					arrFile.sort((o1, o2) => {
+						return o1.name.localeCompare(o2.name);
+					});
+					return arrDir.concat(arrFile);
+				}
 
-						if (!this.username || !this.password) {
-							this.$message({
-								message: 'Please fill username and password',
-								type: 'error',
-								center: true
-							});
+			},
+
+			created() {
+
+				this.addListeners();
+
+				this.isUploadDirSupported = this.isInputDirSupported();
+				this.extractUrlParam();
+				this.isLoggedIn = Cookies.get("LAST_ACTIVITY") ? true : false;
+				if (!this.isLoggedIn) {
+					this.firstTimeOpened = false;
+					return;
+				}
+				this.isLoggedIn = true;
+				this.refresh();
+
+			},
+
+			methods: {
+
+				addListeners() {
+
+					document.addEventListener('keydown', (event) => {
+						if (!this.isLoggedIn) {
+							return;
+						}
+						let keyName = event.key;
+
+						if (keyName === 'Control') {
+							// do not alert when only Control key is pressed.
 							return;
 						}
 
-						axios.post('/apis/signin.php', {
-							'username': this.username, 'password': this.password
-						}).then(result => {
-							if (result.data.status == 'success') {
-								Cookies.set('LAST_ACTIVITY', 'youcandeleteit', { expires: 86400 }); // 1 day
-								this.isLoggedIn = true;
-								if (this.dirBeforeLogout) {
-									this.currentDir = this.dirBeforeLogout;
+						if (event.ctrlKey) {
+							keyName = keyName.toUpperCase();
+							if (keyName == 'X') {
+								if (this.multipleSelection.length != 0) {
+									this.handleCommand('cut');
 								}
-								this.refresh();
-							} else {
-								this.password = '';
-								this.$message({
-									message: result.data.message,
-									type: 'error',
-									center: true
-								});
+							} else if (keyName == 'C') {
+								if (this.multipleSelection.length != 0) {
+									this.handleCommand('copy');
+								}
+							} else if (keyName == 'V') {
+								if (this.operation.parentPath.length != 0) {
+									this.handleCommand('paste');
+								}
 							}
-						}).catch(error => {
+							// Even though event.key is not 'Control' (e.g., 'a' is pressed),
+							// event.ctrlKey may be true if Ctrl key is pressed at the same time.
+							//	alert(`Combination of ctrlKey + ${keyName}`);
+						} else if (keyName == 'Delete') {
+							if (this.multipleSelection.length != 0) {
+								this.handleCommand('delete');
+							}
+						} else if (keyName == 'F2') {
+							if (this.multipleSelection.length == 1) {
+								this.handleCommand('rename');
+							}
+						} else if (event.altKey && keyName == 'N' || keyName == 'n') {
+							this.addDirectory();
+						}
+					}, false);
+				},
+
+				isInputDirSupported() {
+					var tmpInput = document.createElement('input');
+					if ('webkitdirectory' in tmpInput ||
+						'mozdirectory' in tmpInput ||
+						'odirectory' in tmpInput ||
+						'msdirectory' in tmpInput ||
+						'directory' in tmpInput) return true;
+					return false;
+				},
+
+				openFileUploadDialog() {
+					this.$refs.fileUploadInputButton.click();
+				},
+
+				openFolderUploadDialog() {
+					this.$refs.folderUploadInputButton.click();
+				},
+
+				addFilesToUpload() {
+					this.showUploadProgress = false;
+					for (let file of this.$refs.fileUploadInputButton.files) {
+						this.filesToUploadInfo.totalSize += file.size;
+						this.filesToUpload.push(this.createFileInfoObject(file));
+					}
+
+					this.addThread();
+				},
+
+				addFolderToUpload() {
+					this.showUploadProgress = false;
+					for (let file of this.$refs.folderUploadInputButton.files) {
+						this.filesToUploadInfo.totalSize += file.size;
+						this.filesToUpload.push(this.createFileInfoObject(file));
+					}
+					this.addThread();
+				},
+
+				playAudio(name) {
+					this.displayAudioPlayer = true;
+					this.audioSource = '/apis/download.php?path=' + (this.currentDir == '/' ? '/' : encodeURIComponent(this.currentDir) + '/') + name;
+				},
+
+				playVideo(name) {
+					this.displayVideoPlayer = true;
+					this.videoSource = '/apis/download.php?path=' + (this.currentDir == '/' ? '/' : encodeURIComponent(this.currentDir) + '/') + name;
+				},
+
+				closeAudioPlayer() {
+					this.displayAudioPlayer = false;
+					this.audioSource = '';
+					this.$refs.audioPlayer.load();
+				},
+
+				closeVideoPlayer() {
+					this.displayVideoPlayer = false;
+					this.videoSource = '';
+					this.$refs.videoPlayer.load();
+				},
+
+				isImage(name) {
+					return this.imageExtensions.indexOf(name.substring(name.lastIndexOf('.') + 1)) != -1;
+				},
+
+				isAudio(name) {
+					return this.audioExtensions.indexOf(name.substring(name.lastIndexOf('.') + 1)) != -1;
+				},
+
+				isVideo(name) {
+					return this.videoExtensions.indexOf(name.substring(name.lastIndexOf('.') + 1)) != -1;
+				},
+
+				extractUrlParam() {
+					var paramsPath = location.search.substring(1);
+					if (paramsPath) {
+						var parameters = paramsPath.split("&");
+						if (parameters.length > 0) {
+							var firstParam = paramsPath;
+							if (firstParam.indexOf('=') != -1) {
+								firstParamVal = firstParam.split('=')[1];
+								if (firstParamVal) {
+									firstParamVal = unescape(firstParamVal);
+									if (firstParamVal) {
+										this.currentDir = firstParamVal;
+									}
+								}
+							}
+						}
+					}
+				},
+
+				login() {
+
+					if (!this.username || !this.password) {
+						this.$message({
+							message: 'Please fill username and password',
+							type: 'error',
+							center: true
+						});
+						return;
+					}
+
+					axios.post('/apis/signin.php', {
+						'username': this.username,
+						'password': this.password
+					}).then(result => {
+						if (result.data.status == 'success') {
+							Cookies.set('LAST_ACTIVITY', 'youcandeleteit', {
+								expires: 86400
+							}); // 1 day
+							this.isLoggedIn = true;
+							if (this.dirBeforeLogout) {
+								this.currentDir = this.dirBeforeLogout;
+							}
+							this.refresh();
+						} else {
+							this.password = '';
 							this.$message({
-								message: 'Error while checking login details',
+								message: result.data.message,
 								type: 'error',
 								center: true
 							});
-						});
-					},
-
-					logout() {
-						this.dirBeforeLogout = '';
-						window.history.replaceState('', 'File Manager', '?');
-						this.currentDir = '/';
-						this.tableData = [];
-						this.isTableLoading = false;
-						axios.post('/apis/signout.php');
-						Cookies.expire("LAST_ACTIVITY");
-						this.isLoggedIn = false;
-						this.firstTimeOpened = false;
-					},
-
-					openLocalUploadDialog() {
-						if (this.filesToUpload && this.filesUploaded == this.filesToUpload.length) {
-							this.clear();
 						}
-						this.localFileUploadDialog = true;
-					},
+					}).catch(error => {
+						this.$message({
+							message: 'Error while checking login details',
+							type: 'error',
+							center: true
+						});
+					});
+				},
 
-					closeLocalUploadDialog() {
-						this.localFileUploadDialog = false;
+				logout() {
+					this.dirBeforeLogout = '';
+					window.history.replaceState('', 'File Manager', '?');
+					this.currentDir = '/';
+					this.tableData = [];
+					this.isTableLoading = false;
+					axios.post('/apis/signout.php');
+					Cookies.expire("LAST_ACTIVITY");
+					this.isLoggedIn = false;
+					this.firstTimeOpened = false;
+				},
+
+				openLocalUploadDialog() {
+					if (this.filesToUpload && this.filesUploaded == this.filesToUpload.length) {
+						this.clear();
+					}
+					this.localFileUploadDialog = true;
+				},
+
+				closeLocalUploadDialog() {
+					this.localFileUploadDialog = false;
+					this.refresh();
+					this.uploadFilesList.splice(0, this.uploadFilesList.length);
+				},
+
+				openRemoteUploadDialog() {
+					this.remoteUrl = '';
+					this.remoteUrlName = '';
+					this.remoteUploadDialog = true;
+				},
+
+				setOpearation(type) {
+					this.operation.type = type;
+					this.operation.parentPath = this.currentDir;
+					this.operation.selectedFiles = this.multipleSelection;
+				},
+
+				handleCommand(command) {
+					if (command == 'cut') {
+						this.setOpearation('cut');
+					} else if (command == 'copy') {
+						this.setOpearation('copy');
+					} else if (command == 'paste') {
+						this.paste();
+					} else if (command == 'rename') {
+						this.rename();
+					} else if (command == 'size') {
+						this.fetchSize();
+					} else if (command == 'delete') {
+						this.delete();
+					}
+				},
+
+				fetchSize() {
+					var url = `/apis/size.php`;
+					axios.post(url, {
+						'parentDir': this.currentDir,
+						'files': JSON.stringify(this.multipleSelection)
+					}).then((response) => {
+						this.$message({
+							message: 'Size : ' + response.data
+						});
+					}).catch(() => {
+						this.$message({
+							type: 'error',
+							message: 'Unable to fetch file(s) size'
+						});
+					});
+				},
+
+				paste() {
+					var url = `/apis/${this.operation.type}.php`;
+					axios.post(url, {
+						'sourceDir': this.operation.parentPath,
+						'files': JSON.stringify(this.operation.selectedFiles),
+						'destinationDir': this.currentDir
+					}).then((response) => {
 						this.refresh();
-						this.uploadFilesList.splice(0, this.uploadFilesList.length);
-					},
-
-					openRemoteUploadDialog() {
-						this.remoteUrl = '';
-						this.remoteUrlName = '';
-						this.remoteUploadDialog = true;
-					},
-
-					setOpearation(type) {
-						this.operation.type = type;
-						this.operation.parentPath = this.currentDir;
-						this.operation.selectedFiles = this.multipleSelection;
-					},
-
-					handleCommand(command) {
-						if (command == 'cut') {
-							this.setOpearation('cut');
-						} else if (command == 'copy') {
-							this.setOpearation('copy');
-						} else if (command == 'paste') {
-							this.paste();
-						} else if (command == 'rename') {
-							this.rename();
-						} else if (command == 'size') {
-							this.fetchSize();
-						} else if (command == 'delete') {
-							this.delete();
-						}
-					},
-
-					fetchSize() {
-						var url = `/apis/size.php`;
-						axios.post(url, {
-							'parentDir': this.currentDir,
-							'files': JSON.stringify(this.multipleSelection)
-						}).then((response) => {
-							this.$message({
-								message: 'Size : ' + response.data
-							});
-						}).catch(() => {
-							this.$message({
-								type: 'error',
-								message: 'Unable to fetch file(s) size'
-							});
+						this.operation.parentPath = '';
+					}).catch(() => {
+						this.operation.parentPath = '';
+						this.$message({
+							type: 'error',
+							message: `Unable to ${this.operation.type} file(s)`
 						});
-					},
+					});
+				},
 
-					paste() {
-						var url = `/apis/${this.operation.type}.php`;
-						axios.post(url, {
-							'sourceDir': this.operation.parentPath,
-							'files': JSON.stringify(this.operation.selectedFiles),
-							'destinationDir': this.currentDir
-						}).then((response) => {
-							this.refresh();
-							this.operation.parentPath = '';
-						}).catch(() => {
-							this.operation.parentPath = '';
-							this.$message({
-								type: 'error',
-								message: `Unable to ${this.operation.type} file(s)`
-							});
-						});
-					},
-
-					rename() {
-						this.$prompt('Please enter new name', {
-							confirmButtonText: 'Ok',
-							cancelButtonText: 'Cancel',
-							inputValue : this.multipleSelection[0]
-						}).then(value => {
-							value = value.value;
-							if (value) {
-								var url = '/apis/rename.php';
-								axios.post(url, {
-									'parentDir': this.currentDir,
-									'newName': value,
-									'oldName': this.multipleSelection[0]
-								}).then((response) => {
-									this.refresh();
-								}).catch(() => {
-									this.$message({
-										type: 'error',
-										message: `Unable to rename file`
-									});
-								});
-							}
-						}).catch(() => { });
-					},
-
-					delete() {
-						this.$confirm('Are you sure want to permanently delete ?', {
-							confirmButtonText: 'Yes',
-							cancelButtonText: 'No',
-							type: 'warning'
-						}).then(() => {
-							axios.post('/apis/delete.php', {
+				rename() {
+					this.$prompt('Please enter new name', {
+						confirmButtonText: 'Ok',
+						cancelButtonText: 'Cancel',
+						inputValue: this.multipleSelection[0]
+					}).then(value => {
+						value = value.value;
+						if (value) {
+							var url = '/apis/rename.php';
+							axios.post(url, {
 								'parentDir': this.currentDir,
-								'files': JSON.stringify(this.multipleSelection)
+								'newName': value,
+								'oldName': this.multipleSelection[0]
 							}).then((response) => {
 								this.refresh();
 							}).catch(() => {
 								this.$message({
 									type: 'error',
-									message: 'Unable to delete files'
+									message: `Unable to rename file`
 								});
 							});
-						}).catch(() => {
-						});
-					},
-
-					remoteUpload() {
-						this.remoteUploadDialog = false;
-						axios.post('/apis/remote-upload.php', {
-							'parentDir': this.currentDir,
-							'url': this.remoteUrl,
-							'filename': this.remoteUrlName
-						}).then((response) => {
-							this.$message({
-								message: response.data
-							});
-							this.openDir(this.currentDir);
-						});
-						this.$message({
-							type: 'success',
-							message: 'Your file will soon be downloaded'
-						});
-					},
-
-					openStack(index) {
-						var path = '';
-						for (var i = 0; i <= index; i++) {
-							path = path + '/' + this.stack[i];
 						}
-						this.openDir(path);
-					},
+					}).catch(() => {});
+				},
 
-					addDirectory() {
-						this.$prompt('Please enter directory name', {
-							confirmButtonText: 'Add',
-							cancelButtonText: 'Cancel',
-						}).then(value => {
-							if (value) {
-								axios.post('/apis/dir-add.php', {
+				delete() {
+					this.$confirm('Are you sure want to permanently delete ?', {
+						confirmButtonText: 'Yes',
+						cancelButtonText: 'No',
+						type: 'warning'
+					}).then(() => {
+						axios.post('/apis/delete.php', {
+							'parentDir': this.currentDir,
+							'files': JSON.stringify(this.multipleSelection)
+						}).then((response) => {
+							this.refresh();
+						}).catch(() => {
+							this.$message({
+								type: 'error',
+								message: 'Unable to delete files'
+							});
+						});
+					}).catch(() => {});
+				},
+
+				remoteUpload() {
+					this.remoteUploadDialog = false;
+					axios.post('/apis/remote-upload.php', {
+						'parentDir': this.currentDir,
+						'url': this.remoteUrl,
+						'filename': this.remoteUrlName
+					}).then((response) => {
+						this.$message({
+							message: response.data
+						});
+						this.openDir(this.currentDir);
+					});
+					this.$message({
+						type: 'success',
+						message: 'Your file will soon be downloaded'
+					});
+				},
+
+				openStack(index) {
+					var path = '';
+					for (var i = 0; i <= index; i++) {
+						path = path + '/' + this.stack[i];
+					}
+					this.openDir(path);
+				},
+
+				addDirectory() {
+					this.$prompt('Please enter directory name', {
+						confirmButtonText: 'Add',
+						cancelButtonText: 'Cancel',
+					}).then(value => {
+						if (value) {
+							axios.post('/apis/dir-add.php', {
 									'dirname': value.value,
 									'parentPath': this.currentDir
 								})
-									.then((response) => {
-										this.$message({
-											type: 'success',
-											message: 'Directory Added'
-										});
-										this.refresh();
-									}).catch(() => {
-										this.$message({
-											type: 'error',
-											message: 'Unable to add directory'
-										});
-									})
-							}
-						}).catch(() => { });
-					},
-
-					refresh() {
-						this.openDir(this.currentDir);
-					},
-
-					handleSelectionChange(val) {
-						this.multipleSelection = val.map(obj => obj.name);
-					},
-
-					openDirFromList(name) {
-						if (this.currentDir == '/') {
-							this.openDir('/' + name);
-						} else {
-							this.openDir(this.currentDir + '/' + name);
-						}
-					},
-
-					openDir(path) {
-						this.isTableLoading = true;
-						window.history.replaceState('', 'File Manager', '?path=' + path);
-						axios.get('/apis/files-list.php?path=' + encodeURIComponent(path))
-							.then((response) => {
-								this.currentDir = path;
-								this.tableData = response.data;
-								this.isTableLoading = false;
-								this.firstTimeOpened = false;
-							})
-							.catch((error) => {
-								if (error.response.data.message == 'Login Required') {
-									this.logout();
-									this.dirBeforeLogout = path;
-								} else {
+								.then((response) => {
+									this.$message({
+										type: 'success',
+										message: 'Directory Added'
+									});
+									this.refresh();
+								}).catch(() => {
 									this.$message({
 										type: 'error',
-										message: error.response.data.message
+										message: 'Unable to add directory'
 									});
-								}
-							});
-					},
-
-					getThumbnailSmall(name) {
-						return
-					},
-
-					download(name) {
-						document.location = '/apis/download.php?path=' + encodeURIComponent((this.currentDir == '/' ? '/' : this.currentDir + '/') + name);
-					},
-					stopFileUpload(fileInfo) {
-						let threadsStopped = fileInfo.stop();
-						if (threadsStopped > this.threadsRunning) {
-							this.threadsRunning = 0;
-						} else {
-							this.threadsRunning = this.threadsRunning - threadsStopped;
+								})
 						}
-					},
-					resumeFileUpload(fileInfo) {
-						fileInfo.resume();
-						this.addThread();
-					},
-					addThread() {
-						if (this.threadsRunning < this.maxThreads && this.filesToUpload.length > 0) {
-							for (let fileToUpload of this.filesToUpload) {
-								if (fileToUpload.canCreatePromise()) {
-									let filesToUploadInfo = this.filesToUploadInfo;
-									let speedArray = this.speedArray;
-									fileToUpload.createPromise().then(info => {
-										let obj = info.fileInfo;
-										obj.chunksUploaded++;
-										obj.chunksUploading--;
-										obj.bytesUploaded += info.currentChunkSize;
-										this.filesToUploadInfo.uploaded += info.currentChunkSize;
+					}).catch(() => {});
+				},
 
-										// calculating speed speedArray
-										this.speedArray.push((info.currentChunkSize * 1000) / ((new Date()).getTime() - info.time))
-										if (this.speedArray.length > 4) {
-											this.speedArray.splice(0, 1);
-										}
-										let sum = this.speedArray.reduce(function (a, b) { return a + b; });
-										let avg = sum / this.speedArray.length;
-										let speed = this.threadsRunning * avg;
-										this.filesToUploadInfo.speed = this.threadsRunning * avg;
-										this.filesToUploadInfo.timeRemaining = parseTime((this.filesToUploadInfo.totalSize - this.filesToUploadInfo.uploaded) / this.filesToUploadInfo.speed);
-										this.threadsRunning--;
-										delete obj.threads[info.index];
+				refresh() {
+					this.openDir(this.currentDir);
+				},
 
-									});
-									this.threadsRunning++;
-									return;
-								}
-							}
-						}
-					},
-					clear() {
-						this.filesToUploadInfo.totalSize = 0;
-						this.filesToUploadInfo.uploaded = 0;
-						this.filesToUploadInfo.speed = 0;
-						this.filesToUploadInfo.timeRemaining = '';
-						this.filesToUpload = [];
-						this.speedArray = [];
-						if (this.$refs.folderUploadInputButton) {
-							this.$refs.folderUploadInputButton.value = '';
-						}
-						if (this.$refs.fileUploadInputButton) {
-							this.$refs.fileUploadInputButton.value = '';
-						}
-					},
+				handleSelectionChange(val) {
+					this.multipleSelection = val.map(obj => obj.name);
+				},
 
-					createFileInfoObject(file) {
-						let size = file.size;
-						let bytesPerChunk = 524288;
-						let totalNoOfChunks = Math.max(Math.ceil(size / bytesPerChunk), 1);
-						/*if (totalNoOfChunks > 1) {
-							totalNoOfChunks--;
-							bytesPerChunk = Math.max(Math.ceil(size / totalNoOfChunks), 1);
-						} */
-						let fileUniqueId = file.name + (new Date()).getTime();
-						return {
-							parentDir: this.currentDir,
-							file: file,
-							bytesPerChunk: bytesPerChunk,
-							totalNoOfChunks: totalNoOfChunks,
-							chunksUploaded: 0,
-							chunksUploading: 0,
-							bytesUploaded: 0,
-							isPaused: false,
-							threads: {},
-							progressComputed: 0,
-							fileUniqueId: fileUniqueId,
-							uploadInfoText: '- / ' + formatSize(file.size, file.size),
-							canCreatePromise() {
-								if ((this.chunksUploaded + this.chunksUploading) != this.totalNoOfChunks && !this.isPaused) {
-									return true;
-								}
-								return false;
-							},
-							isUploaded() {
-								return this.chunksUploaded == this.totalNoOfChunks;
-							},
-							createPromise() {
-								let start = (this.chunksUploaded + this.chunksUploading) * this.bytesPerChunk;
-								let end = start + this.bytesPerChunk;
-								let blob = this.file.slice(start, end);
-								let currentChunkSize = (this.file.size < end ? this.file.size : end) - start;
-								let chunkToUpload = this.chunksUploaded + this.chunksUploading + 1;
-								return new Promise((resolve, reject) => {
-									let fd = new FormData();
-									let xhr = new XMLHttpRequest();
-									fd.append('upload', blob, this.file.name);
-									if (this.file.webkitRelativePath) {
-										fd.append('isWebkitPathAdded', 'true');
-										let webkitpath = this.file.webkitRelativePath;
-										webkitpath = webkitpath.substring(0, webkitpath.lastIndexOf('/'));
-										fd.append('webkitRelativePath', webkitpath);
-									} else {
-										fd.append('isWebkitPathAdded', 'false');
-									}
-									fd.append('fileUniqueId', this.fileUniqueId);
-									fd.append('num', chunkToUpload);
-									fd.append('num_chunks', this.totalNoOfChunks);
-									fd.append('parentDir', this.parentDir);
-									xhr.open('POST', '/apis/upload.php', true);
-									this.threads[chunkToUpload] = {};
-									this.threads[chunkToUpload]['progress'] = 0.0;
-									this.threads[chunkToUpload]['stop'] = () => {
-										xhr.abort();
-									};
-									this.threads[chunkToUpload]['currentChunkSize'] = currentChunkSize;
-									xhr.upload.addEventListener('progress', (evt) => {
-										if (evt.lengthComputable) {
-											this.threads[chunkToUpload]['progress'] = evt.loaded / evt.total;
-											this.progressComputed = this.progress();
-											this.uploadInfoText = formatSize(this.bytesUploadedTillNow(), this.file.size) + ' / ' + formatSize(this.file.size, this.file.size);
-										}
-									}, false);
-									this.chunksUploading++;
-									let date = new Date();
-									xhr.onload = () => resolve({ 'fileInfo': this, 'index': chunkToUpload, 'currentChunkSize': currentChunkSize, 'time': date.getTime() });
-									xhr.onerror = () => reject(xhr.statusText);
-									xhr.send(fd);
+				openDirFromList(name) {
+					if (this.currentDir == '/') {
+						this.openDir('/' + name);
+					} else {
+						this.openDir(this.currentDir + '/' + name);
+					}
+				},
+
+				openDir(path) {
+					this.isTableLoading = true;
+					window.history.replaceState('', 'File Manager', '?path=' + path);
+					axios.get('/apis/files-list.php?path=' + encodeURIComponent(path))
+						.then((response) => {
+							this.currentDir = path;
+							this.tableData = response.data;
+							this.isTableLoading = false;
+							this.firstTimeOpened = false;
+						})
+						.catch((error) => {
+							if (error.response.data.message == 'Login Required') {
+								this.logout();
+								this.dirBeforeLogout = path;
+							} else {
+								this.$message({
+									type: 'error',
+									message: error.response.data.message
 								});
-							},
-							stop() {
-								this.isPaused = true;
-								let threadsStopped = 0;
-								for (var key in this.threads) {
-									this.threads[key]['stop']();
-									threadsStopped++;
-								}
-								this.threads = {};
-								this.chunksUploading = 0;
-								this.progressComputed = this.progress();
-								return threadsStopped;
-							},
-							resume() {
-								this.isPaused = false;
-							},
-							progress() {
-								let chunksUploaded = this.chunksUploaded;
-								for (var key in this.threads) {
-									chunksUploaded += this.threads[key]['progress'];
-								}
-								return parseInt(chunksUploaded * 100 / this.totalNoOfChunks);
-							},
-							bytesUploadedTillNow() {
-								let bytesUploaded = this.bytesUploaded;
-								for (var key in this.threads) {
-									bytesUploaded += this.threads[key]['progress'] * this.threads[key]['currentChunkSize'];
-								}
-								return parseInt(bytesUploaded);
 							}
-						};
-					},
-					submitFiles() {
-						this.addThread();
-					},
-					formatSize(num, MAX) {
-						return formatSize(num, MAX);
-					}
-				}
-			});
+						});
+				},
 
-			function formatSize(num, MAX) {
-				let suffix, d = num;
-				if ((d / 1073741824) >= 1) {
-					d = d / 1073741824;
-					// if max values less than 20 GB
-					if (MAX > 21474836480) {
-						d = Math.ceil(d);
+				getThumbnailSmall(name) {
+					return
+				},
+
+				download(name) {
+					document.location = '/apis/download.php?path=' + encodeURIComponent((this.currentDir == '/' ? '/' : this.currentDir + '/') + name);
+				},
+				stopFileUpload(fileInfo) {
+					let threadsStopped = fileInfo.stop();
+					if (threadsStopped > this.threadsRunning) {
+						this.threadsRunning = 0;
 					} else {
-						d = d.toFixed(2);
+						this.threadsRunning = this.threadsRunning - threadsStopped;
 					}
-					suffix = " GB";
-				} else if ((d / 1048576) >= 1) {
-					d = d / 1048576;
-					if (MAX > 20971520) {
-						d = Math.ceil(d);
-					} else {
-						d = d.toFixed(1);
+				},
+				resumeFileUpload(fileInfo) {
+					fileInfo.resume();
+					this.addThread();
+				},
+				addThread() {
+					if (this.threadsRunning < this.maxThreads && this.filesToUpload.length > 0) {
+						for (let fileToUpload of this.filesToUpload) {
+							if (fileToUpload.canCreatePromise()) {
+								let filesToUploadInfo = this.filesToUploadInfo;
+								let speedArray = this.speedArray;
+								fileToUpload.createPromise().then(info => {
+									let obj = info.fileInfo;
+									obj.chunksUploaded++;
+									obj.chunksUploading--;
+									obj.bytesUploaded += info.currentChunkSize;
+									this.filesToUploadInfo.uploaded += info.currentChunkSize;
+
+									// calculating speed speedArray
+									this.speedArray.push((info.currentChunkSize * 1000) / ((new Date()).getTime() - info.time))
+									if (this.speedArray.length > 4) {
+										this.speedArray.splice(0, 1);
+									}
+									let sum = this.speedArray.reduce(function(a, b) {
+										return a + b;
+									});
+									let avg = sum / this.speedArray.length;
+									let speed = this.threadsRunning * avg;
+									this.filesToUploadInfo.speed = this.threadsRunning * avg;
+									this.filesToUploadInfo.timeRemaining = parseTime((this.filesToUploadInfo.totalSize - this.filesToUploadInfo.uploaded) / this.filesToUploadInfo.speed);
+									this.threadsRunning--;
+									delete obj.threads[info.index];
+
+								});
+								this.threadsRunning++;
+								return;
+							}
+						}
 					}
-					suffix = " MB";
-				} else if ((d / 1024) >= 1) {
-					d = d / 1024;
-					if (MAX > 20480) {
-						d = Math.ceil(d);
-					} else {
-						d = d.toFixed(1);
+				},
+				clear() {
+					this.filesToUploadInfo.totalSize = 0;
+					this.filesToUploadInfo.uploaded = 0;
+					this.filesToUploadInfo.speed = 0;
+					this.filesToUploadInfo.timeRemaining = '';
+					this.filesToUpload = [];
+					this.speedArray = [];
+					if (this.$refs.folderUploadInputButton) {
+						this.$refs.folderUploadInputButton.value = '';
 					}
-					suffix = " KB";
-				} else {
+					if (this.$refs.fileUploadInputButton) {
+						this.$refs.fileUploadInputButton.value = '';
+					}
+				},
+
+				createFileInfoObject(file) {
+					let size = file.size;
+					let bytesPerChunk = 524288;
+					let totalNoOfChunks = Math.max(Math.ceil(size / bytesPerChunk), 1);
+					/*if (totalNoOfChunks > 1) {
+						totalNoOfChunks--;
+						bytesPerChunk = Math.max(Math.ceil(size / totalNoOfChunks), 1);
+					} */
+					let fileUniqueId = file.name + (new Date()).getTime();
+					return {
+						parentDir: this.currentDir,
+						file: file,
+						bytesPerChunk: bytesPerChunk,
+						totalNoOfChunks: totalNoOfChunks,
+						chunksUploaded: 0,
+						chunksUploading: 0,
+						bytesUploaded: 0,
+						isPaused: false,
+						threads: {},
+						progressComputed: 0,
+						fileUniqueId: fileUniqueId,
+						uploadInfoText: '- / ' + formatSize(file.size, file.size),
+						canCreatePromise() {
+							if ((this.chunksUploaded + this.chunksUploading) != this.totalNoOfChunks && !this.isPaused) {
+								return true;
+							}
+							return false;
+						},
+						isUploaded() {
+							return this.chunksUploaded == this.totalNoOfChunks;
+						},
+						createPromise() {
+							let start = (this.chunksUploaded + this.chunksUploading) * this.bytesPerChunk;
+							let end = start + this.bytesPerChunk;
+							let blob = this.file.slice(start, end);
+							let currentChunkSize = (this.file.size < end ? this.file.size : end) - start;
+							let chunkToUpload = this.chunksUploaded + this.chunksUploading + 1;
+							return new Promise((resolve, reject) => {
+								let fd = new FormData();
+								let xhr = new XMLHttpRequest();
+								fd.append('upload', blob, this.file.name);
+								if (this.file.webkitRelativePath) {
+									fd.append('isWebkitPathAdded', 'true');
+									let webkitpath = this.file.webkitRelativePath;
+									webkitpath = webkitpath.substring(0, webkitpath.lastIndexOf('/'));
+									fd.append('webkitRelativePath', webkitpath);
+								} else {
+									fd.append('isWebkitPathAdded', 'false');
+								}
+								fd.append('fileUniqueId', this.fileUniqueId);
+								fd.append('num', chunkToUpload);
+								fd.append('num_chunks', this.totalNoOfChunks);
+								fd.append('parentDir', this.parentDir);
+								xhr.open('POST', '/apis/upload.php', true);
+								this.threads[chunkToUpload] = {};
+								this.threads[chunkToUpload]['progress'] = 0.0;
+								this.threads[chunkToUpload]['stop'] = () => {
+									xhr.abort();
+								};
+								this.threads[chunkToUpload]['currentChunkSize'] = currentChunkSize;
+								xhr.upload.addEventListener('progress', (evt) => {
+									if (evt.lengthComputable) {
+										this.threads[chunkToUpload]['progress'] = evt.loaded / evt.total;
+										this.progressComputed = this.progress();
+										this.uploadInfoText = formatSize(this.bytesUploadedTillNow(), this.file.size) + ' / ' + formatSize(this.file.size, this.file.size);
+									}
+								}, false);
+								this.chunksUploading++;
+								let date = new Date();
+								xhr.onload = () => resolve({
+									'fileInfo': this,
+									'index': chunkToUpload,
+									'currentChunkSize': currentChunkSize,
+									'time': date.getTime()
+								});
+								xhr.onerror = () => reject(xhr.statusText);
+								xhr.send(fd);
+							});
+						},
+						stop() {
+							this.isPaused = true;
+							let threadsStopped = 0;
+							for (var key in this.threads) {
+								this.threads[key]['stop']();
+								threadsStopped++;
+							}
+							this.threads = {};
+							this.chunksUploading = 0;
+							this.progressComputed = this.progress();
+							return threadsStopped;
+						},
+						resume() {
+							this.isPaused = false;
+						},
+						progress() {
+							let chunksUploaded = this.chunksUploaded;
+							for (var key in this.threads) {
+								chunksUploaded += this.threads[key]['progress'];
+							}
+							return parseInt(chunksUploaded * 100 / this.totalNoOfChunks);
+						},
+						bytesUploadedTillNow() {
+							let bytesUploaded = this.bytesUploaded;
+							for (var key in this.threads) {
+								bytesUploaded += this.threads[key]['progress'] * this.threads[key]['currentChunkSize'];
+							}
+							return parseInt(bytesUploaded);
+						}
+					};
+				},
+				submitFiles() {
+					this.addThread();
+				},
+				formatSize(num, MAX) {
+					return formatSize(num, MAX);
+				}
+			}
+		});
+
+		function formatSize(num, MAX) {
+			let suffix, d = num;
+			if ((d / 1073741824) >= 1) {
+				d = d / 1073741824;
+				// if max values less than 20 GB
+				if (MAX > 21474836480) {
 					d = Math.ceil(d);
-					suffix = " Bytes";
+				} else {
+					d = d.toFixed(2);
 				}
-				return d + suffix;
+				suffix = " GB";
+			} else if ((d / 1048576) >= 1) {
+				d = d / 1048576;
+				if (MAX > 20971520) {
+					d = Math.ceil(d);
+				} else {
+					d = d.toFixed(1);
+				}
+				suffix = " MB";
+			} else if ((d / 1024) >= 1) {
+				d = d / 1024;
+				if (MAX > 20480) {
+					d = Math.ceil(d);
+				} else {
+					d = d.toFixed(1);
+				}
+				suffix = " KB";
+			} else {
+				d = Math.ceil(d);
+				suffix = " Bytes";
 			}
+			return d + suffix;
+		}
 
-			function parseTime(d) {
-				d = parseInt(d);
-				d = Number(d);
-				var h = Math.floor(d / 3600);
-				var m = Math.floor(d % 3600 / 60);
-				m = m + 1;
+		function parseTime(d) {
+			d = parseInt(d);
+			d = Number(d);
+			var h = Math.floor(d / 3600);
+			var m = Math.floor(d % 3600 / 60);
+			m = m + 1;
 
-				var hDisplay = h > 0 ? h + (h == 1 ? " Hour, " : " Hours, ") : "";
-				var mDisplay = m > 0 ? m + (m == 1 ? " Minute " : " Minutes ") : "";
-				return hDisplay + mDisplay;
-			}
-		</script>
-	</body>
+			var hDisplay = h > 0 ? h + (h == 1 ? " Hour, " : " Hours, ") : "";
+			var mDisplay = m > 0 ? m + (m == 1 ? " Minute " : " Minutes ") : "";
+			return hDisplay + mDisplay;
+		}
+	</script>
+</body>
 
 </html>
