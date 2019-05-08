@@ -502,7 +502,7 @@
 
 					playAudio(name) {
 						this.displayAudioPlayer = true;
-						this.audioSource = '/apis/download.php?path=' + (this.currentDir == '/' ? '/' : encodeURIComponent(this.currentDir) + '/') + name;
+						this.audioSource = '/apis/music.php?path=' + (this.currentDir == '/' ? '/' : encodeURIComponent(this.currentDir) + '/') + name;
 					},
 
 					playVideo(name) {
