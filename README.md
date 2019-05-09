@@ -1,4 +1,4 @@
-# PHP File Manager
+# VueDisk File Manager
 File Manger using vuejs, element ui as frontend and php as backend.
 
 Inspired from Filegator, Aws S3 explorer and Google Drive UI.
