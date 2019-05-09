@@ -88,15 +88,8 @@ if ($uploadedChunks == $num_chunks) {
 	if (strpos($parentDir, '/') != 0) {
 		$parentDir =  '/' . $parentDir;
 	}
-
-	$parentDir = $baseDir . $parentDir . '/';
-
-	$isWebkitPathAdded = $_POST['isWebkitPathAdded'];
-	if ($isWebkitPathAdded == 'true') {
-		$parentDir = $parentDir . $_POST['webkitRelativePath'] . '/';
-		if (!file_exists($parentDir)) {
-			mkdir($parentDir, 0777, true);
-		}
+	if (!file_exists($parentDir)) {
+		mkdir($parentDir, 0777, true);
 	}
 
 	if (strpos($parentDir, '/./') != false || strpos($parentDir, '..') != false) {

@@ -4,7 +4,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>VueDisk File Manager</title>
+		<title>VueDisk</title>
 		<meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport" />
 		<meta content="yes" name="apple-mobile-web-app-capable" />
 		<meta content="black" name="apple-mobile-web-app-status-bar-style" />
@@ -43,6 +43,15 @@
 				body {
 					background: #fff;
 				}
+			}
+			.flex {
+				display:flex;
+			}
+			.flex > div {
+				display: flex;
+				justify-content:center;
+				align-content:center;
+				flex-direction:column;
 			}
 		</style>
 	</head>
@@ -84,7 +93,7 @@
 							<el-button v-if="!isMobile" size="small" @click="openLocalUploadDialog()" type="primary" icon="el-icon-upload">Upload</el-button>
 							<el-button v-if="isMobile" size="small" @click="openLocalUploadDialog()" type="primary" icon="el-icon-upload"></el-button>
 							<el-button v-if="!isMobile" type="primary" @click="openRemoteUploadDialog()" size="small" icon="el-icon-upload">Remote Upload</el-button>
-							<el-dropdown style="margin-left:10px" split-button type="primary" size="small" trigger="click" @command="handleCommand">
+							<el-dropdown style="margin-left:10px" type="primary" size="small" trigger="click" @command="handleCommand">
 								Actions
 								<el-dropdown-menu slot="dropdown">
 									<el-dropdown-item command="cut" :disabled="multipleSelection.length == 0">Cut</el-dropdown-item>
@@ -176,7 +185,7 @@
 				<div class="clearfix" style="display:flex;align-items:center;margin-bottom:10px">
 					<div class="upload-btn-wrapper" v-if="isUploadDirSupported" style="margin-right:20px">
 						<el-button type="primary" @click="openFolderUploadDialog()">Add Folder</el-button>
-						<input type="file" id="file" ref="folderUploadInputButton" webkitdirectory multiple @change="addFolderToUpload()" />
+						<input type="file" id="file" ref="folderUploadInputButton" webkitdirectory multiple @change="addFilesToUpload()" />
 					</div>
 					<div class="upload-btn-wrapper">
 						<el-button type="primary" @click="openFileUploadDialog()">Add Files</el-button>
@@ -188,17 +197,17 @@
 
 				<div v-if="!isMobile" style="max-height:250px;overflow-y:auto;overflow-x:hidden">
 					<div class="row-bg" v-for="fileInfo in filesToUpload" :key="fileInfo.file" style="margin-bottom:5px">
-						<div :span="24">
-							<table style="width:100%">
-								<tr>
-									<td>{{fileInfo.file.name}}</td>
-									<td style="text-align:right">
-										{{ fileInfo.uploadInfoText }}
-										<el-button style="padding: 3px 0" v-if="!fileInfo.isUploaded() && fileInfo.isPaused" @click="resumeFileUpload(fileInfo)" type="text">Resume</el-button>
-										<el-button style="padding: 3px 0" v-if="!fileInfo.isUploaded() && !fileInfo.isPaused" @click="stopFileUpload(fileInfo)" type="text">Pause</el-button>
-									</td>
-								</tr>
-							</table>
+						<div :span="24" class="clearfix flex">
+									<div style="font-weight: 500">{{fileInfo.file.name}}</div>
+									<div style="flex: 1 1"></div>
+									<div>{{ fileInfo.uploadInfoText }}</div>
+									<div v-if="!fileInfo.isUploaded()" style="margin-left:10px">
+										<el-button v-if="fileInfo.isPaused" @click="resumeFileUpload(fileInfo)" type="text" title="Resume"><img src="icons/play_arrow-24px.svg" alt="Resume"></el-button>
+										<el-button v-if="!fileInfo.isPaused" @click="pauseFileUpload(fileInfo)" type="text" title="Pause"><img src="icons/pause-24px.svg" alt="Pause"></el-button>
+									</div>
+									<div v-if="!fileInfo.isUploaded()" style="margin-left: 10px;">
+										<el-button @click="cancelFileUpload(fileInfo)" type="text" title="Cancel"><img src="icons/close-24px.svg" alt="Cancel"></el-button>
+									</div>
 						</div>
 						<div :span="24">
 							<el-progress v-if="fileInfo.isUploaded()" :percentage="100" status="success"></el-progress>
@@ -210,10 +219,16 @@
 				<div v-if="isMobile" style="max-height:180px;overflow-y:auto;overflow-x:hidden">
 					<div class="row-bg" v-for="fileInfo in filesToUpload" :key="fileInfo.file" style="margin-bottom:10px">
 						<div :span="24" style="font-weight: 500">{{fileInfo.file.name}}</div>
-						<div :span="24">
-							{{ fileInfo.uploadInfoText }}
-							<el-button style="padding: 3px 0" v-if="!fileInfo.isUploaded() && fileInfo.isPaused" @click="resumeFileUpload(fileInfo)" type="text">Resume</el-button>
-							<el-button style="padding: 3px 0" v-if="!fileInfo.isUploaded() && !fileInfo.isPaused" @click="stopFileUpload(fileInfo)" type="text">Pause</el-button>
+						<div :span="24" class="flex">
+							<div>{{ fileInfo.uploadInfoText }}</div>
+							<div style="flex: 1 1"></div>
+							<div v-if="!fileInfo.isUploaded()" style="margin-left:10px">
+								<el-button v-if="fileInfo.isPaused" @click="resumeFileUpload(fileInfo)" type="text" title="Resume"><img src="icons/play_arrow-24px.svg" alt="Resume"></el-button>
+								<el-button v-else @click="pauseFileUpload(fileInfo)" type="text" title="Pause"><img src="icons/pause-24px.svg" alt="Pause"></el-button>
+							</div>
+							<div v-if="!fileInfo.isUploaded()" style="margin-left: 10px;">
+								<el-button @click="cancelFileUpload(fileInfo)" type="text" title="Cancel Uploading"><img src="icons/close-24px.svg" alt="Cancel"></el-button>
+							</div>
 						</div>
 						<div :span="24">
 							<el-progress v-if="fileInfo.isUploaded()" :percentage="100" status="success"></el-progress>
@@ -421,8 +436,8 @@
 
 				methods: {
 
+					// Add shortcut listeners
 					addListeners() {
-
 						document.addEventListener('keydown', (event) => {
 							if (!this.isLoggedIn) {
 								return;
@@ -487,16 +502,6 @@
 					addFilesToUpload() {
 						this.showUploadProgress = false;
 						for (let file of this.$refs.fileUploadInputButton.files) {
-							this.filesToUploadInfo.totalSize += file.size;
-							this.filesToUpload.push(this.createFileInfoObject(file));
-						}
-
-						this.addThread();
-					},
-
-					addFolderToUpload() {
-						this.showUploadProgress = false;
-						for (let file of this.$refs.folderUploadInputButton.files) {
 							this.filesToUploadInfo.totalSize += file.size;
 							this.filesToUpload.push(this.createFileInfoObject(file));
 						}
@@ -777,7 +782,7 @@
 											type: 'error',
 											message: 'Unable to add directory'
 										});
-									})
+									});
 							}
 						}).catch(() => { });
 					},
@@ -828,13 +833,31 @@
 					download(name) {
 						document.location = '/apis/download.php?path=' + encodeURIComponent((this.currentDir == '/' ? '/' : this.currentDir + '/') + name);
 					},
-					stopFileUpload(fileInfo) {
-						let threadsStopped = fileInfo.stop();
-						if (threadsStopped > this.threadsRunning) {
+					pauseFileUpload(fileInfo) {
+						let threadsPaused = fileInfo.pause();
+						if (threadsPaused > this.threadsRunning) {
 							this.threadsRunning = 0;
 						} else {
-							this.threadsRunning = this.threadsRunning - threadsStopped;
+							this.threadsRunning = this.threadsRunning - threadsPaused;
 						}
+					},
+
+					cancelFileUpload(fileInfo) {
+						let threadsCanceled = fileInfo.cancel();
+						if (threadsCanceled > this.threadsRunning) {
+							this.threadsRunning = 0;
+						} else {
+							this.threadsRunning = this.threadsRunning - threadsCanceled;
+						}
+						let i = this.filesToUpload.length;
+						while (i--) {
+							if (this.filesToUploadInfo[i].file.name == fileInfo.file.name && this.filesToUploadInfo[i].parentDir == fileInfo.parentDir) {
+								this.filesToUploadInfo[i].splice(i, 1);
+								break;
+							}
+						}
+						this.filesToUploadInfo.totalSize -= fileInfo.size;
+						this.filesToUploadInfo.uploaded--;
 					},
 					resumeFileUpload(fileInfo) {
 						fileInfo.resume();
@@ -899,8 +922,18 @@
 							bytesPerChunk = Math.max(Math.ceil(size / totalNoOfChunks), 1);
 						} */
 						let fileUniqueId = file.name + (new Date()).getTime();
+						let parentDir = this.parentDir;
+						if (file.webkitRelativePath) {
+							let webkitpath = file.webkitRelativePath;
+							webkitpath = webkitpath.substring(0, webkitpath.lastIndexOf('/'));
+							if (!parentDir.endsWith('/')) {
+								parentDir = parentDir + '/' + webkitpath;
+							} else {
+								parentDir = parentDir + webkitpath;
+							}
+						}
 						return {
-							parentDir: this.currentDir,
+							parentDir: parentDir,
 							file: file,
 							bytesPerChunk: bytesPerChunk,
 							totalNoOfChunks: totalNoOfChunks,
@@ -931,18 +964,10 @@
 									let fd = new FormData();
 									let xhr = new XMLHttpRequest();
 									fd.append('upload', blob, this.file.name);
-									if (this.file.webkitRelativePath) {
-										fd.append('isWebkitPathAdded', 'true');
-										let webkitpath = this.file.webkitRelativePath;
-										webkitpath = webkitpath.substring(0, webkitpath.lastIndexOf('/'));
-										fd.append('webkitRelativePath', webkitpath);
-									} else {
-										fd.append('isWebkitPathAdded', 'false');
-									}
 									fd.append('fileUniqueId', this.fileUniqueId);
 									fd.append('num', chunkToUpload);
 									fd.append('num_chunks', this.totalNoOfChunks);
-									fd.append('parentDir', this.parentDir);
+									fd.append('parentDir', parentDir);
 									xhr.open('POST', '/apis/upload.php', true);
 									this.threads[chunkToUpload] = {};
 									this.threads[chunkToUpload]['progress'] = 0.0;
@@ -969,7 +994,7 @@
 									xhr.send(fd);
 								});
 							},
-							stop() {
+							pause() {
 								this.isPaused = true;
 								let threadsStopped = 0;
 								for (var key in this.threads) {
@@ -979,6 +1004,27 @@
 								this.threads = {};
 								this.chunksUploading = 0;
 								this.progressComputed = this.progress();
+								return threadsStopped;
+							},
+							cancel() {
+								this.isPaused = true;
+								let threadsStopped = 0;
+								for (var key in this.threads) {
+									this.threads[key]['stop']();
+									threadsStopped++;
+								}
+								this.threads = {};
+								this.chunksUploading = 0;
+								this.progressComputed = this.progress();
+								let fileUniqueId = this.fileUniqueId;
+								axios.post('/apis/cancel-upload.php', {
+									'fileUniqueId': fileUniqueId
+								})
+									.then((response) => {
+
+									}).catch((e) => {
+										console.error(e);
+									});
 								return threadsStopped;
 							},
 							resume() {
