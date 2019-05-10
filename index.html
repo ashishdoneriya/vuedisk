@@ -967,7 +967,7 @@
 									fd.append('fileUniqueId', this.fileUniqueId);
 									fd.append('num', chunkToUpload);
 									fd.append('num_chunks', this.totalNoOfChunks);
-									fd.append('parentDir', parentDir);
+									fd.append('parentDir', this.parentDir);
 									xhr.open('POST', '/apis/upload.php', true);
 									this.threads[chunkToUpload] = {};
 									this.threads[chunkToUpload]['progress'] = 0.0;
