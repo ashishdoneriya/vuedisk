@@ -93,8 +93,11 @@
 							<el-button v-if="!isMobile" size="small" @click="openLocalUploadDialog()" type="primary" icon="el-icon-upload">Upload</el-button>
 							<el-button v-if="isMobile" size="small" @click="openLocalUploadDialog()" type="primary" icon="el-icon-upload"></el-button>
 							<el-button v-if="!isMobile" type="primary" @click="openRemoteUploadDialog()" size="small" icon="el-icon-upload">Remote Upload</el-button>
-							<el-dropdown style="margin-left:10px" type="primary" size="small" trigger="click" @command="handleCommand">
-								Actions
+
+							<el-dropdown style="margin-left:10px"  trigger="click" @command="handleCommand" style="cursor:pointer">
+								<el-button type="primary" size="small">
+									Actions<i class="el-icon-arrow-down el-icon--right"></i>
+								</el-button>
 								<el-dropdown-menu slot="dropdown">
 									<el-dropdown-item command="cut" :disabled="multipleSelection.length == 0">Cut</el-dropdown-item>
 									<el-dropdown-item command="copy" :disabled="multipleSelection.length == 0">Copy</el-dropdown-item>
@@ -922,7 +925,7 @@
 							bytesPerChunk = Math.max(Math.ceil(size / totalNoOfChunks), 1);
 						} */
 						let fileUniqueId = file.name + (new Date()).getTime();
-						let parentDir = this.parentDir;
+						let parentDir = this.currentDir;
 						if (file.webkitRelativePath) {
 							let webkitpath = file.webkitRelativePath;
 							webkitpath = webkitpath.substring(0, webkitpath.lastIndexOf('/'));

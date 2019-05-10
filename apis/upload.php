@@ -12,9 +12,9 @@ if ($baseDir == null) {
 $num = $_POST['num'];
 
 $tmp_name = $_FILES['upload']['tmp_name'];
-$target_path = $baseDir .  '/.cache/phpFileManager/';
+$target_path = $baseDir .  '/.cache/vuedisk/';
 $filename =  $_POST['fileUniqueId'];
-$target_file = $baseDir .  '/.cache/phpFileManager/' . $filename;
+$target_file = $baseDir .  '/.cache/vuedisk/' . $filename;
 $num = $_POST['num'];
 $num_chunks = $_POST['num_chunks'];
 if (!file_exists($target_path)) {
@@ -88,13 +88,16 @@ if ($uploadedChunks == $num_chunks) {
 	if (strpos($parentDir, '/') != 0) {
 		$parentDir =  '/' . $parentDir;
 	}
+	if (strpos($parentDir, '/./') != false || strpos($parentDir, '..') != false) {
+		return;
+	}
+
+	$parentDir = $baseDir . $parentDir;
+
 	if (!file_exists($parentDir)) {
 		mkdir($parentDir, 0777, true);
 	}
 
-	if (strpos($parentDir, '/./') != false || strpos($parentDir, '..') != false) {
-		return;
-	}
 	$filenameOriginal = $_FILES['upload']['name'];
 	rename($target_file.'1', $parentDir . $filenameOriginal );
 	rrmdir($target_file);
