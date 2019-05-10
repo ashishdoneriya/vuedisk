@@ -22,37 +22,56 @@
 		<script src="/js/vue-lazyload.js"></script>
 		<script src="/js/v-img.min.js"></script>
 		<style>
+			.flex {
+				display: flex;
+				justify-content: center;
+				align-content: center;
+				align-items: center;
+			}
+
+			.flex>div {
+				/*flex-direction: column;*/
+				margin-left:14px;
+			}
+
+			.flex>div:first-child {
+				margin-left: 0px;
+			}
+
 			@media only screen and (max-width: 720px) {
 				.el-container.is-vertical {
 					margin: 0px;
 				}
+
 				.el-card__body,
 				.el-card {
 					padding: 0px;
 					border: none;
 					box-shadow: none !important;
 				}
+
 				.el-main {
 					padding-left: 0px;
 				}
+
 				.el-message-box,
-				.el-dialog, .box-card {
+				.el-dialog,
+				.box-card {
 					margin: 0 auto;
 					width: calc(100% - 20px);
 				}
+
 				body {
 					background: #fff;
 				}
+				.mPaddingLeft20 {
+					padding-left:20px;
+				}
+				.mPaddingLeft5 {
+					padding-left: 5px;
+				}
 			}
-			.flex {
-				display:flex;
-			}
-			.flex > div {
-				display: flex;
-				justify-content:center;
-				align-content:center;
-				flex-direction:column;
-			}
+
 		</style>
 	</head>
 
@@ -88,36 +107,50 @@
 					</h1>
 				</el-header>
 				<el-main>
-					<el-row style="padding-left:20px;" type="flex" class="row-bg" justify="space-between">
+					<el-row class="mPaddingLeft20" type="flex" class="row-bg" justify="space-between">
 						<el-col>
-							<el-button v-if="!isMobile" size="small" @click="openLocalUploadDialog()" type="primary" icon="el-icon-upload">Upload</el-button>
-							<el-button v-if="isMobile" size="small" @click="openLocalUploadDialog()" type="primary" icon="el-icon-upload"></el-button>
-							<el-button v-if="!isMobile" type="primary" @click="openRemoteUploadDialog()" size="small" icon="el-icon-upload">Remote Upload</el-button>
+							<div class="flex">
+								<div v-if="!isMobile">
+									<el-button size="small" @click="openLocalUploadDialog()" type="primary" icon="el-icon-upload">Upload</el-button>
+								</div>
+								<div v-if="isMobile">
+									<el-button size="small" @click="openLocalUploadDialog()" type="primary" icon="el-icon-upload"></el-button>
+								</div>
+								<div v-if="!isMobile">
+									<el-button type="primary" @click="openRemoteUploadDialog()" size="small" icon="el-icon-upload">Remote Upload</el-button>
+								</div>
 
-							<el-dropdown style="margin-left:10px"  trigger="click" @command="handleCommand" style="cursor:pointer">
-								<el-button type="primary" size="small">
-									Actions<i class="el-icon-arrow-down el-icon--right"></i>
-								</el-button>
-								<el-dropdown-menu slot="dropdown">
-									<el-dropdown-item command="cut" :disabled="multipleSelection.length == 0">Cut</el-dropdown-item>
-									<el-dropdown-item command="copy" :disabled="multipleSelection.length == 0">Copy</el-dropdown-item>
-									<el-dropdown-item command="paste" :disabled="operation.parentPath.length == 0">Paste</el-dropdown-item>
-									<el-dropdown-item command="delete" :disabled="multipleSelection.length == 0">Delete</el-dropdown-item>
-									<el-dropdown-item command="rename" :disabled="multipleSelection.length != 1">Rename</el-dropdown-item>
-									<el-dropdown-item command="size" :disabled="multipleSelection.length == 0">Get Size</el-dropdown-item>
-								</el-dropdown-menu>
-							</el-dropdown>
-							<div v-if="!isMobile" style="display: inline-block">
-								<el-radio-group v-model="displayMode" size="small" style="margin-left:10px">
-									<el-radio label="list" border>List</el-radio>
-									<el-radio label="gallery" border>Gallery</el-radio>
-								</el-radio-group>
+								<div>
+									<el-dropdown trigger="click" @command="handleCommand">
+										<el-button type="primary" size="small">
+											Actions<i class="el-icon-arrow-down el-icon--right"></i>
+										</el-button>
+										<el-dropdown-menu slot="dropdown">
+											<el-dropdown-item command="cut" :disabled="multipleSelection.length == 0">Cut</el-dropdown-item>
+											<el-dropdown-item command="copy" :disabled="multipleSelection.length == 0">Copy</el-dropdown-item>
+											<el-dropdown-item command="paste" :disabled="operation.parentPath.length == 0">Paste</el-dropdown-item>
+											<el-dropdown-item command="delete" :disabled="multipleSelection.length == 0">Delete</el-dropdown-item>
+											<el-dropdown-item command="rename" :disabled="multipleSelection.length != 1">Rename</el-dropdown-item>
+											<el-dropdown-item command="size" :disabled="multipleSelection.length == 0">Get Size</el-dropdown-item>
+										</el-dropdown-menu>
+									</el-dropdown>
+								</div>
+								<div v-if="!isMobile" style="display: inline-block">
+									<el-radio-group v-model="displayMode" size="small">
+										<el-radio label="list" border>List</el-radio>
+										<el-radio label="gallery" border>Gallery</el-radio>
+									</el-radio-group>
+								</div>
+								<div v-if="!isMobile"><i class="el-icon-refresh" style="font-weight: bold;font-size: 20px" @click="refresh()"></i>
+								</div>
+								<div style="flex: 1 1"></div>
+								<div>
+									<el-button style="float:right" type="primary" @click="addDirectory()" size="small" icon="el-icon-plus">New Folder</el-button>
+								</div>
 							</div>
-							<i v-if="!isMobile" class="el-icon-refresh" style="font-weight: bold;margin-left: 10px;font-size: 20px" @click="refresh()"></i>
-							<el-button style="float:right" type="primary" @click="addDirectory()" size="small" icon="el-icon-plus">New Folder</el-button>
 						</el-col>
 					</el-row>
-					<el-row style="margin: 25px 0;padding-left:20px;">
+					<el-row class="mPaddingLeft20" style="margin: 25px 0;">
 						<el-col :span="24">
 							<el-breadcrumb separator-class="el-icon-arrow-right">
 								<el-breadcrumb-item>
@@ -129,7 +162,7 @@
 							</el-breadcrumb>
 						</el-col>
 					</el-row>
-					<el-row style="padding-left:5px;" type="flex" class="row-bg" justify="center">
+					<el-row class="mPaddingLeft5" type="flex" class="row-bg" justify="center">
 						<el-col :span="24">
 							<el-card v-show="displayMode == 'list'">
 								<el-table ref="multipleTable" :data="tableDataFinal" v-loading="isTableLoading" style="width: 100%" @selection-change="handleSelectionChange" size="medium" highlight-current-row>
@@ -201,16 +234,16 @@
 				<div v-if="!isMobile" style="max-height:250px;overflow-y:auto;overflow-x:hidden">
 					<div class="row-bg" v-for="fileInfo in filesToUpload" :key="fileInfo.file" style="margin-bottom:5px">
 						<div :span="24" class="clearfix flex">
-									<div style="font-weight: 500">{{fileInfo.file.name}}</div>
-									<div style="flex: 1 1"></div>
-									<div>{{ fileInfo.uploadInfoText }}</div>
-									<div v-if="!fileInfo.isUploaded()" style="margin-left:10px">
-										<el-button v-if="fileInfo.isPaused" @click="resumeFileUpload(fileInfo)" type="text" title="Resume"><img src="icons/play_arrow-24px.svg" alt="Resume"></el-button>
-										<el-button v-if="!fileInfo.isPaused" @click="pauseFileUpload(fileInfo)" type="text" title="Pause"><img src="icons/pause-24px.svg" alt="Pause"></el-button>
-									</div>
-									<div v-if="!fileInfo.isUploaded()" style="margin-left: 10px;">
-										<el-button @click="cancelFileUpload(fileInfo)" type="text" title="Cancel"><img src="icons/close-24px.svg" alt="Cancel"></el-button>
-									</div>
+							<div style="font-weight: 500">{{fileInfo.file.name}}</div>
+							<div style="flex: 1 1"></div>
+							<div>{{ fileInfo.uploadInfoText }}</div>
+							<div v-if="!fileInfo.isUploaded()" style="margin-left:10px">
+								<el-button v-if="fileInfo.isPaused" @click="resumeFileUpload(fileInfo)" type="text" title="Resume"><img src="icons/play_arrow-24px.svg" alt="Resume"></el-button>
+								<el-button v-if="!fileInfo.isPaused" @click="pauseFileUpload(fileInfo)" type="text" title="Pause"><img src="icons/pause-24px.svg" alt="Pause"></el-button>
+							</div>
+							<div v-if="!fileInfo.isUploaded()" style="margin-left: 10px;">
+								<el-button @click="cancelFileUpload(fileInfo)" type="text" title="Cancel"><img src="icons/close-24px.svg" alt="Cancel"></el-button>
+							</div>
 						</div>
 						<div :span="24">
 							<el-progress v-if="fileInfo.isUploaded()" :percentage="100" status="success"></el-progress>
