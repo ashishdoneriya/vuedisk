@@ -536,11 +536,16 @@
 					},
 
 					addFilesToUpload() {
-					//	console.log(this.$refs.fileUploadInputButton.files[0]);
 						this.showUploadProgress = false;
 						for (let file of this.$refs.fileUploadInputButton.files) {
 							this.filesToUploadInfo.totalSize += file.size;
 							this.filesToUpload.push(this.createFileInfoObject(file));
+						}
+						if (this.$refs.folderUploadInputButton) {
+							this.$refs.folderUploadInputButton.value = '';
+						}
+						if (this.$refs.fileUploadInputButton) {
+							this.$refs.fileUploadInputButton.value = '';
 						}
 						this.addThread();
 					},
@@ -897,6 +902,7 @@
 						this.filesToUploadInfo.totalSize -= fileInfo.size;
 						this.filesToUploadInfo.uploaded--;
 					},
+
 					resumeFileUpload(fileInfo) {
 						fileInfo.resume();
 						this.addThread();
@@ -943,12 +949,6 @@
 						this.filesToUploadInfo.timeRemaining = '';
 						this.filesToUpload = [];
 						this.speedArray = [];
-						if (this.$refs.folderUploadInputButton) {
-							this.$refs.folderUploadInputButton.value = '';
-						}
-						if (this.$refs.fileUploadInputButton) {
-							this.$refs.fileUploadInputButton.value = '';
-						}
 					},
 
 					createFileInfoObject(file) {
@@ -970,6 +970,7 @@
 								parentDir = parentDir + webkitpath;
 							}
 						}
+						file['parentDir'] = parentDir;
 						return {
 							parentDir: parentDir,
 							file: file,
