@@ -23,3 +23,5 @@ username - admin , password - admin
 ![List View](/screenshots/screenshot-list-1.png)
 ![Uploading Files](/screenshots/screenshot-fileupload.png)
 ![Gallery View](/screenshots/screenshot-gallery.png)
+
+![Small Screen Files List](/screenshots/small-screen-files-list.png) ![Small Screen Files Uploading](/screenshots/small-screen-files-uploading.png)
