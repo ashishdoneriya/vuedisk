@@ -21,5 +21,5 @@ username - admin , password - admin
 2. Copy script to your php server or cloud.
 
 ![List View](/screenshots/screenshot-list-1.png)
-![Gallery View](/screenshots/screenshot-gallery.png)
 ![Uploading Files](/screenshots/screenshot-fileupload.png)
+![Gallery View](/screenshots/screenshot-gallery.png)
