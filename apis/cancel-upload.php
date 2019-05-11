@@ -12,7 +12,7 @@ header("Access-Control-Allow-Methods: POST");
 $data = json_decode(file_get_contents('php://input'), true);
 $dirname = $data['fileUniqueId'];
 
-$target_file = $baseDir .  '/.cache/phpFileManager/' . $dirname;
+$target_file = $baseDir .  '/.cache/vuedisk/' . $dirname;
 
 rrmdir($target_file);
 

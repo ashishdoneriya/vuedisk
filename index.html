@@ -216,7 +216,7 @@
 					</el-row>
 				</el-main>
 			</el-container>
-			<el-dialog v-cloak title="File(s) Upload" :visible.sync="localFileUploadDialog">
+			<el-dialog v-cloak title="File(s) Upload" :visible.sync="localFileUploadDialog" @close="refresh()">
 
 				<div class="clearfix" style="display:flex;align-items:center;margin-bottom:10px">
 					<div class="upload-btn-wrapper" v-if="isUploadDirSupported" style="margin-right:20px">
@@ -536,6 +536,7 @@
 					},
 
 					addFilesToUpload() {
+					//	console.log(this.$refs.fileUploadInputButton.files[0]);
 						this.showUploadProgress = false;
 						for (let file of this.$refs.fileUploadInputButton.files) {
 							this.filesToUploadInfo.totalSize += file.size;
@@ -887,8 +888,9 @@
 						}
 						let i = this.filesToUpload.length;
 						while (i--) {
-							if (this.filesToUploadInfo[i].file.name == fileInfo.file.name && this.filesToUploadInfo[i].parentDir == fileInfo.parentDir) {
-								this.filesToUploadInfo[i].splice(i, 1);
+							let obj = this.filesToUpload[i];
+							if (obj.file.name == fileInfo.file.name && obj.parentDir == fileInfo.parentDir) {
+								this.filesToUpload.splice(i, 1);
 								break;
 							}
 						}
