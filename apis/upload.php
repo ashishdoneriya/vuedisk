@@ -17,7 +17,6 @@ $fileUniqueId =  $_POST['fileUniqueId'];
 $workspaceDir = $baseDir .  '/.cache/vuedisk/' . $fileUniqueId;
 $tempTargetFilePath = $workspaceDir . '/' . $fileUniqueId;
 $lockPath =  $workspaceDir . '/lock/';
-$chunksUploadedFilePath =  $workspaceDir . '/chunksUploaded.txt';
 $serialNumFilePath =  $workspaceDir . '/serialNo.txt';
 
 $chunkNumber = $_POST['num'];
@@ -44,9 +43,6 @@ while (true) {
 	sleep(mt_rand(10, 50));
 }
 
-// Checking how many number of chunks have been uploaded
-$uploadedChunks = updateAndGetChunksUploaded($chunksUploadedFilePath);
-
 // Checking how many number of chunks have been merged serial wise
 $serialNumber = getSerialNumber();
 $updatedSerialNum = 0;
@@ -55,7 +51,7 @@ if ($serialNumber == 0) {
 		$serialNumber = 1;
 		$destFile = fopen($tempTargetFilePath.'1', 'ab');
 		$i = $serialNumber + 1;
-		for (; $i <= $uploadedChunks; $i++) {
+		for (; $i <= $totalNumChunks; $i++) {
 			if (!file_exists($tempTargetFilePath.$i)) {
 				break;
 			}
@@ -72,7 +68,7 @@ if ($serialNumber == 0) {
 } else {
 	$i = $serialNumber + 1;
 	$destFile = fopen($tempTargetFilePath.'1', 'ab');
-	for (; $i <= $uploadedChunks; $i++) {
+	for (; $i <= $totalNumChunks; $i++) {
 		if (!file_exists($tempTargetFilePath.$i)) {
 			break;
 		}
@@ -125,23 +121,6 @@ if (file_exists($lockPath)) {
 }
 
 echo 'success';
-
-function updateAndGetChunksUploaded($path) {
-	if (file_exists($path)) {
-		$uploaded = (int) file_get_contents($path);
-		$uploaded += 1;
-		unlink($path);
-		$myfile = fopen($path, "w");
-		fwrite($myfile, (string) $uploaded);
-		fclose($myfile);
-		return $uploaded;
-	} else {
-		$myfile = fopen($path, "w");
-		fwrite($myfile, '1');
-		fclose($myfile);
-		return 1;
-	}
-}
 
 function setSerialNumber($serialNumber) {
 	global $serialNumFilePath;

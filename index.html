@@ -300,7 +300,7 @@
 				</div>
 
 				<div class="clearfix" v-if="!isMobile" style="display:flex;align-items:center;margin-bottom:10px;margin-top:15px;">
-					<div v-if="filesToUpload && filesToUpload.length > 0 && filesUploaded < filesToUpload.length && filesToUploadInfo.timeRemaining"><span style="margin-right:5px;font-weight:bold">Time Remaining : {{filesToUploadInfo.timeRemaining}} @ {{formatSize(filesToUploadInfo.speed)}} / S</span></div>
+					<div v-if="filesToUpload && filesToUpload.length > 0 && filesUploaded < filesToUpload.length && filesToUploadInfo.timeRemaining"><span style="margin-right:5px;font-weight:bold">Time Remaining : {{filesToUploadInfo.timeRemaining}} @ {{formatSize(filesToUploadInfo.speed)}}/s</span></div>
 					<div style="flex: 1 1"></div>
 					<div :span="24" v-if="filesToUpload && filesToUpload.length > 1"><span style="margin-right:5px;font-weight:bold">{{formatSize(filesToUploadInfo.uploaded)}} / {{formatSize(filesToUploadInfo.totalSize)}}</span></div>
 				</div>
@@ -976,6 +976,10 @@
 						}
 						this.filesToUploadInfo.totalSize -= fileInfo.size;
 						this.filesToUploadInfo.uploaded--;
+						this.filesToUploadInfo.speed = 0;
+						if (this.filesToUploadInfo.totalSize == 0) {
+							this.speedArray = [];
+						}
 					},
 
 					resumeFileUpload(fileInfo) {
@@ -997,7 +1001,7 @@
 
 										// calculating speed speedArray
 										this.speedArray.push((info.currentChunkSize * 1000) / ((new Date()).getTime() - info.time))
-										if (this.speedArray.length > 4) {
+										if (this.speedArray.length > 8) {
 											this.speedArray.splice(0, 1);
 										}
 										let sum = this.speedArray.reduce(function (a, b) {
