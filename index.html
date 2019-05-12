@@ -22,6 +22,13 @@
 		<script src="js/vue-lazyload.js"></script>
 		<script src="js/v-img.min.js"></script>
 		<style>
+
+			.mainTitle {
+				height: 60px;
+				margin-top: 20px;
+				margin-bottom: 30px;
+			}
+
 			.flex {
 				display: flex;
 				justify-content: center;
@@ -43,6 +50,10 @@
 			}
 
 			@media only screen and (max-width: 720px) {
+				.mainTitle {
+					margin-top:0px;
+					margin-bottom:30px;
+				}
 				.el-container.is-vertical {
 					margin: 0px;
 				}
@@ -75,6 +86,11 @@
 					padding-left: 5px;
 				}
 
+				/*login page 'Login' heading*/
+				.el-card__header {
+					border-bottom:none;
+				}
+
 			}
 
 		</style>
@@ -88,7 +104,7 @@
 				<el-col :xs="24" :sm="16" :md="12" :lg="8">
 					<el-card class="box-card">
 						<div slot="header" class="clearfix" style="text-align:center">
-							<span>Login</span>
+							<span style="font-weight:bold">Login</span>
 						</div>
 						<el-form :label-position="'left'" label-width="80px" @submit.prevent.native>
 							<el-form-item label="Username">
@@ -105,8 +121,8 @@
 				</el-col>
 			</el-row>
 			<el-container v-cloak class="container" v-bind:style="{maxWidth : pageWidth}" v-show="!firstTimeOpened && isLoggedIn == true">
-				<span v-if="isMobile" style="position:absolute;top:20px;right:20px;cursor: pointer;font-size:14px; font-weight: normal;" @click="logout()">Logout</span>
-				<el-header class="text-center" style="margin-top:20px;margin-bottom:30px">
+				<img v-if="isMobile" style="position:absolute;top:10px;right:10px;cursor: pointer;font-size:14px; font-weight: normal;" @click="logout()" src="icons/power_settings_new-24px.svg" alt="Logout">
+				<el-header class="text-center mainTitle">
 					<h1>File Manager
 						<span v-if="!isMobile" style="float:right;cursor: pointer;font-size:14px; font-weight: normal;" @click="logout()">Logout</span>
 					</h1>
