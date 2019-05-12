@@ -974,8 +974,8 @@
 								break;
 							}
 						}
-						this.filesToUploadInfo.totalSize -= fileInfo.size;
-						this.filesToUploadInfo.uploaded--;
+						this.filesToUploadInfo.totalSize -= fileInfo.file.size;
+						this.filesToUploadInfo.uploaded -= fileInfo.bytesUploaded;
 						this.filesToUploadInfo.speed = 0;
 						if (this.filesToUploadInfo.totalSize == 0) {
 							this.speedArray = [];
@@ -1015,7 +1015,7 @@
 										delete obj.threads[info.index];
 
 									}).catch((error)=> {
-										console.log(err);
+										console.log(error);
 										this.threadsRunning--;
 									});
 									this.threadsRunning++;
@@ -1113,7 +1113,10 @@
 										'time': date.getTime()
 									});
 
-									xhr.onerror = () => reject(xhr.statusText);
+									xhr.onerror = () => {
+										this.pause();
+										reject(xhr.statusText);
+									}
 									xhr.send(fd);
 								});
 							},
@@ -1147,7 +1150,7 @@
 								}
 								this.threads = {};
 								this.chunksUploading = 0;
-								this.progressComputed = this.progress();
+							//	this.progressComputed = this.progress();
 								let fileUniqueId = this.fileUniqueId;
 								axios.post('/apis/cancel-upload.php', {
 									'fileUniqueId': fileUniqueId
