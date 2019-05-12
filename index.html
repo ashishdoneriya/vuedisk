@@ -9,18 +9,18 @@
 		<meta content="yes" name="apple-mobile-web-app-capable" />
 		<meta content="black" name="apple-mobile-web-app-status-bar-style" />
 		<meta content="telephone=no" name="format-detection" />
-		<link rel="icon" type="image/png" href="/icons/favico.png" />
-		<link rel="stylesheet" href="/css/theme/index.css">
-		<link rel="stylesheet" href="/css/theme/display.css">
-		<link rel="stylesheet" href="/fonts/Roboto/roboto.css">
-		<link rel="stylesheet" href="/css/index.css">
-		<script src="/js/vue.min.js"></script>
-		<script src="/js/elementui.min.js"></script>
-		<script src="/js/element.en.js"></script>
-		<script src="/js/axios.min.js"></script>
-		<script src="/js/cookies.min.js"></script>
-		<script src="/js/vue-lazyload.js"></script>
-		<script src="/js/v-img.min.js"></script>
+		<link rel="icon" type="image/png" href="icons/favico.png" />
+		<link rel="stylesheet" href="css/theme/index.css">
+		<link rel="stylesheet" href="css/theme/display.css">
+		<link rel="stylesheet" href="fonts/Roboto/roboto.css">
+		<link rel="stylesheet" href="css/index.css">
+		<script src="js/vue.min.js"></script>
+		<script src="js/elementui.min.js"></script>
+		<script src="js/element.en.js"></script>
+		<script src="js/axios.min.js"></script>
+		<script src="js/cookies.min.js"></script>
+		<script src="js/vue-lazyload.js"></script>
+		<script src="js/v-img.min.js"></script>
 		<style>
 			.flex {
 				display: flex;
@@ -36,6 +36,10 @@
 
 			.flex>div:first-child {
 				margin-left: 0px;
+			}
+
+			.el-message {
+				min-width:20px;
 			}
 
 			@media only screen and (max-width: 720px) {
@@ -70,6 +74,7 @@
 				.mPaddingLeft5 {
 					padding-left: 5px;
 				}
+
 			}
 
 		</style>
@@ -456,7 +461,8 @@
 
 				created() {
 
-					this.addListeners();
+					this.addShortcutListeners();
+					this.addNetworkCheckerListeners();
 
 					this.isUploadDirSupported = !this.isMobile && this.isInputDirSupported();
 					this.extractUrlParam();
@@ -473,7 +479,7 @@
 				methods: {
 
 					// Add shortcut listeners
-					addListeners() {
+					addShortcutListeners() {
 						document.addEventListener('keydown', (event) => {
 							if (!this.isLoggedIn) {
 								return;
@@ -515,6 +521,49 @@
 								this.addDirectory();
 							}
 						}, false);
+					},
+
+					addNetworkCheckerListeners() {
+						window.addEventListener('offline', ()=> {
+							if (this.filesToUpload.length <= 0) {
+								return;
+							}
+							let anyUploadingStopped = false;
+							for (let fileInfo of this.filesToUpload) {
+								if (fileInfo.isUploaded() || fileInfo.isPaused) {
+									continue;
+								}
+								anyUploadingStopped = true;
+								fileInfo.pause();
+								fileInfo.hasNetworkError = true;
+							}
+							this.$message({
+								message: 'Network disconnected' + (anyUploadingStopped ? '. Pausing file(s) uploading.' : '') ,
+								type: 'error',
+								center: true
+							});
+							this.threadsRunning = 0;
+						});
+						window.addEventListener('online', ()=> {
+							if (this.filesToUpload.length <= 0) {
+								return;
+							}
+							let anyUploadingRestarted = false;
+							for (let fileInfo of this.filesToUpload) {
+								if (fileInfo.isUploaded() || !fileInfo.hasNetworkError) {
+									continue;
+								}
+								anyUploadingRestarted = true;
+								fileInfo.resume();
+								fileInfo.hasNetworkError = false;
+							}
+							this.$message({
+								message: 'Network connected.' + (anyUploadingRestarted ? ', Resuming file(s) uploading.' : '') ,
+								type: 'info',
+								center: true
+							});
+							this.addThread();
+						});
 					},
 
 					isInputDirSupported() {
@@ -704,12 +753,14 @@
 							'files': JSON.stringify(this.multipleSelection)
 						}).then((response) => {
 							this.$message({
-								message: 'Size : ' + response.data
+								message: 'Size : ' + response.data,
+								center: true
 							});
 						}).catch(() => {
 							this.$message({
 								type: 'error',
-								message: 'Unable to fetch file(s) size'
+								message: 'Unable to fetch file(s) size',
+								center: true
 							});
 						});
 					},
@@ -727,7 +778,8 @@
 							this.operation.parentPath = '';
 							this.$message({
 								type: 'error',
-								message: `Unable to ${this.operation.type} file(s)`
+								message: `Unable to ${this.operation.type} file(s)`,
+								center: true
 							});
 						});
 					},
@@ -750,7 +802,8 @@
 								}).catch(() => {
 									this.$message({
 										type: 'error',
-										message: `Unable to rename file`
+										message: `Unable to rename file`,
+										center: true
 									});
 								});
 							}
@@ -771,7 +824,8 @@
 							}).catch(() => {
 								this.$message({
 									type: 'error',
-									message: 'Unable to delete files'
+									message: 'Unable to delete files',
+									center: true
 								});
 							});
 						}).catch(() => { });
@@ -785,13 +839,15 @@
 							'filename': this.remoteUrlName
 						}).then((response) => {
 							this.$message({
-								message: response.data
+								message: response.data,
+								center: true
 							});
 							this.openDir(this.currentDir);
 						});
 						this.$message({
 							type: 'success',
-							message: 'Your file will soon be downloaded'
+							message: 'Your file will soon be downloaded',
+							center: true
 						});
 					},
 
@@ -816,13 +872,15 @@
 									.then((response) => {
 										this.$message({
 											type: 'success',
-											message: 'Directory Added'
+											message: 'Directory Added',
+											center: true
 										});
 										this.refresh();
 									}).catch(() => {
 										this.$message({
 											type: 'error',
-											message: 'Unable to add directory'
+											message: 'Unable to add directory',
+											center: true
 										});
 									});
 							}
@@ -862,7 +920,8 @@
 								} else {
 									this.$message({
 										type: 'error',
-										message: error.response.data.message
+										message: error.response.data.message,
+										center: true
 									});
 								}
 							});
@@ -935,6 +994,9 @@
 										this.threadsRunning--;
 										delete obj.threads[info.index];
 
+									}).catch((error)=> {
+										console.log(err);
+										this.threadsRunning--;
 									});
 									this.threadsRunning++;
 									return;
@@ -980,6 +1042,7 @@
 							chunksUploading: 0,
 							bytesUploaded: 0,
 							isPaused: false,
+							hasNetworkError: false,
 							threads: {},
 							progressComputed: 0,
 							fileUniqueId: fileUniqueId,
@@ -1029,6 +1092,7 @@
 										'currentChunkSize': currentChunkSize,
 										'time': date.getTime()
 									});
+
 									xhr.onerror = () => reject(xhr.statusText);
 									xhr.send(fd);
 								});
@@ -1036,13 +1100,22 @@
 							pause() {
 								this.isPaused = true;
 								let threadsStopped = 0;
-								for (var key in this.threads) {
-									this.threads[key]['stop']();
+								let minKey = Number.MAX_VALUE;
+								for (let sKey in this.threads) {
+									this.threads[sKey]['stop']();
 									threadsStopped++;
+									delete this.threads[sKey];
+									let key = parseInt(sKey);
+									if (minKey > key) {
+										minKey = key;
+									}
+
 								}
-								this.threads = {};
+								this.chunksUploaded = minKey -1;
 								this.chunksUploading = 0;
+								this.bytesUploaded = this.chunksUploaded * this.bytesPerChunk;
 								this.progressComputed = this.progress();
+								this.uploadInfoText = formatSize(this.bytesUploadedTillNow(), this.file.size) + ' / ' + formatSize(this.file.size, this.file.size);
 								return threadsStopped;
 							},
 							cancel() {

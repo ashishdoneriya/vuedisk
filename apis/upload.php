@@ -49,7 +49,7 @@ $uploadedChunks = updateAndGetChunksUploaded($chunksUploadedFilePath);
 
 // Checking how many number of chunks have been merged serial wise
 $serialNumber = getSerialNumber();
-
+$updatedSerialNum = 0;
 if ($serialNumber == 0) {
 	if ($chunkNumber == 1) {
 		$serialNumber = 1;
@@ -67,6 +67,7 @@ if ($serialNumber == 0) {
 		}
 		fclose($destFile);
 		setSerialNumber($i - 1);
+		$updatedSerialNum = $i - 1;
 	}
 } else {
 	$i = $serialNumber + 1;
@@ -83,10 +84,11 @@ if ($serialNumber == 0) {
 	}
 	fclose($destFile);
 	setSerialNumber($i - 1);
+	$updatedSerialNum = $i - 1;
 }
 
 // when this triggers - that means chunks are uploaded
-if ($uploadedChunks == $totalNumChunks) {
+if ($updatedSerialNum == $totalNumChunks) {
 	$parentDir = $_POST['parentDir'];
 
 	if (!ends_with($parentDir, '/')) {
