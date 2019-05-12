@@ -14,7 +14,7 @@ username - admin , password - admin
 * Generate thumbnails dynamically
 * Fast & smooth navigation
 
-[Download script](https://github.com/ashishdoneriya/php-file-manager/archive/v0.1.1.zip)
+[Download script](https://github.com/ashishdoneriya/php-file-manager/archive/v0.1.2.zip)
 
 ## How to setup?
 1. Change or add username, password and home directory in the file apis/base-dir.php and you are good to go. It doesn't use any type of database.
