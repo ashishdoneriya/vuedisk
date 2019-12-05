@@ -3,16 +3,16 @@ File Manager using vuejs, element ui as frontend and php as backend.
 
 Inspired from Filegator, Aws S3 explorer and Google Drive UI.
 
-[Demo](https://vuedisk.csetutorials.com/)\
-username - demo , password - demo
+[Demo](https://vuedisk.csetutorials.com/)
 
 ## Features
+* Generate thumbnails dynamically
+* Fast & smooth navigation
 * Fast Uploading (parallel uploading feature)
 * Upload any size of file even when there is file size limitation in server
 * Folder upload
 * Remote file upload
-* Generate thumbnails dynamically
-* Fast & smooth navigation
+
 
 [Download script](https://github.com/ashishdoneriya/php-file-manager/archive/v0.1.2.zip)
 
