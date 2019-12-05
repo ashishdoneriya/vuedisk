@@ -3,8 +3,8 @@ File Manager using vuejs, element ui as frontend and php as backend.
 
 Inspired from Filegator, Aws S3 explorer and Google Drive UI.
 
-[Demo](http://test.csetutorials.com)\
-username - admin , password - admin
+[Demo](https://vuedisk.csetutorials.com/)\
+username - demo , password - demo
 
 ## Features
 * Fast Uploading (parallel uploading feature)
