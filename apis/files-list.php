@@ -39,7 +39,15 @@ if ($handle = opendir($path)) {
 	while (false !== ($entry = readdir($handle))) {
 		$filepath = $path . '/'. $entry;
 		if (!is_dir($filepath)) {
-			array_push($list, array('name' => $entry , 'isDir' => false, 'size' => getSize($filepath)));
+			$mime = mime_content_type($filepath);
+			if ($mime == false) {
+				$mime = 'none/none';
+			}
+			$size =  getSize($filepath);
+			if ($size == ' B') {
+				$size = '0 B';
+			}
+			array_push($list, array('name' => $entry , 'isDir' => false, 'size' => $size, 'mime' => $mime));
 		}
 	}
 	closedir($handle);
