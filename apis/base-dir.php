@@ -2,7 +2,7 @@
 
 // Note : don't add '/' at the end
 $credentials_list = array();
-array_push($credentials_list, array('username' => 'impadmin', 'password' => 'impetus', 'baseDirectory' => '/home/ashish'));
+array_push($credentials_list, array('username' => 'abcd', 'password' => 'efgh', 'baseDirectory' => '/home/ashish'));
 array_push($credentials_list, array('username' => 'user2', 'password' => 'pass2', 'baseDirectory' => '/path-to-a-directory-1'));
 
 
