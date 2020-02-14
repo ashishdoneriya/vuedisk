@@ -21,85 +21,14 @@
 		<script src="js/cookies.min.js"></script>
 		<script src="js/vue-lazyload.js"></script>
 		<script src="js/v-img.min.js"></script>
-		<style>
-
-			.mainTitle {
-				height: 60px;
-				margin-top: 20px;
-				margin-bottom: 30px;
-			}
-
-			.flex {
-				display: flex;
-				justify-content: center;
-				align-content: center;
-				align-items: center;
-			}
-
-			.flex>div {
-				/*flex-direction: column;*/
-				margin-left:14px;
-			}
-
-			.flex>div:first-child {
-				margin-left: 0px;
-			}
-
-			.el-message {
-				min-width:20px;
-			}
-
-			@media only screen and (max-width: 720px) {
-				.mainTitle {
-					margin-top:0px;
-					margin-bottom:30px;
-				}
-				.el-container.is-vertical {
-					margin: 0px;
-				}
-
-				.el-card__body,
-				.el-card {
-					padding: 0px;
-					border: none;
-					box-shadow: none !important;
-				}
-
-				.el-main {
-					padding-left: 0px;
-				}
-
-				.el-message-box,
-				.el-dialog,
-				.box-card {
-					margin: 0 auto;
-					width: calc(100% - 20px);
-				}
-
-				body {
-					background: #fff;
-				}
-				.mPaddingLeft20 {
-					padding-left:20px;
-				}
-				.mPaddingLeft5 {
-					padding-left: 5px;
-				}
-
-				/*login page 'Login' heading*/
-				.el-card__header {
-					border-bottom:none;
-				}
-
-			}
-
-		</style>
 	</head>
 
 	<body>
 		<div id="vapp">
-			<!-- First time loader -->
+			<!-- FIRST TIME LOADER -->
 			<div v-show="firstTimeOpened" class="spinner"></div>
+
+			<!-- LOGIN SCREEN -->
 			<el-row v-cloak v-show="!firstTimeOpened && isLoggedIn == false" type="flex" class="row-bg" justify="center" style="margin-top:100px">
 				<el-col :xs="24" :sm="16" :md="12" :lg="8">
 					<el-card class="box-card">
@@ -120,6 +49,9 @@
 					</el-card>
 				</el-col>
 			</el-row>
+
+
+			<!-- FILE MANAGER SCREEN start -->
 			<el-container v-cloak class="container" v-bind:style="{maxWidth : pageWidth}" v-show="!firstTimeOpened && isLoggedIn == true">
 				<img v-if="isMobile" style="position:absolute;top:10px;right:10px;cursor: pointer;font-size:14px; font-weight: normal;" @click="logout()" src="icons/power_settings_new-24px.svg" alt="Logout">
 				<el-header class="text-center mainTitle">
@@ -128,6 +60,7 @@
 					</h1>
 				</el-header>
 				<el-main>
+					<!-- ACTIONS BAR start-->
 					<el-row class="mPaddingLeft20" type="flex" class="row-bg" justify="space-between">
 						<el-col>
 							<div class="flex">
@@ -171,6 +104,9 @@
 							</div>
 						</el-col>
 					</el-row>
+					<!-- ACTIONS BAR end -->
+
+					<!-- BREAD CRUMB BAR start-->
 					<el-row class="mPaddingLeft20" style="margin: 25px 0;">
 						<el-col :span="24">
 							<el-breadcrumb separator-class="el-icon-arrow-right">
@@ -183,8 +119,13 @@
 							</el-breadcrumb>
 						</el-col>
 					</el-row>
+					<!-- BREAD CRUMB BAR end-->
+
+					<!-- FILES LISTING start-->
 					<el-row class="mPaddingLeft5" type="flex" class="row-bg" justify="center">
 						<el-col :span="24">
+
+							<!-- FILES LISTING - LIST MODE start-->
 							<el-card v-show="displayMode == 'list'">
 								<el-table ref="multipleTable" :data="tableDataFinal" v-loading="isTableLoading" style="width: 100%" @selection-change="handleSelectionChange" size="medium" highlight-current-row>
 									<el-table-column type="selection" style="padding-left:0px !important" width="30">
@@ -209,6 +150,9 @@
 									</el-col>
 								</el-row>
 							</el-card>
+								<!-- FILES LISTING - LIST MODE end-->
+
+								<!-- FILES LISTING - GALLERY MODE start-->
 							<div v-if="displayMode == 'gallery'">
 								<el-row style="margin-bottom:20px" v-if="totalCurrentDirs > 0">
 									<span style="font-family:Roboto;font-size:18px;font-weight:400;color:#555">Folders
@@ -233,10 +177,15 @@
 									<img v-for="row of this.tableDataFinal" v-if="!row.isDir" v-lazy="'/apis/thumbnail.php?type=small&name=' + row.name + '&parent=' + encodeURIComponent(currentDir)" v-img="{group :  'gallery', title: row.name, src : '/apis/thumbnail.php?type=large&name=' + row.name + '&parent=' + encodeURIComponent(currentDir), sourceButton: 'true', sourceButtonDownloadLink: '/apis/download.php?path=' + (currentDir == '/' ? '/' : encodeURIComponent(currentDir) + '/') + row.name}" style="height:200px;margin: 5px;float:left" :title="row.name">
 								</el-row>
 							</div>
+								<!-- FILES LISTING - GALLERY MODE end-->
 						</el-col>
 					</el-row>
+						<!-- FILES LISTING end-->
 				</el-main>
 			</el-container>
+			<!-- FILE MANAGER SCREEN end -->
+
+			<!-- File UPLOAD DIALOGUE start -->
 			<el-dialog v-cloak title="File(s) Upload" :visible.sync="localFileUploadDialog" @close="refresh()">
 
 				<div class="clearfix" style="display:flex;align-items:center;margin-bottom:10px">
@@ -308,6 +257,9 @@
 					<el-button type="primary" @click="closeLocalUploadDialog()">Close</el-button>
 				</span>
 			</el-dialog>
+			<!-- File UPLOAD DIALOGUE end -->
+
+			<!-- REMOTE FILE UPLOAD DIALOGUE start -->
 			<el-dialog v-cloak title="Remote File Upload" :visible.sync="remoteUploadDialog">
 				<el-form>
 					<el-form-item label="File Url" label-width="150">
@@ -322,6 +274,9 @@
 					<el-button type="primary" @click="remoteUpload()">Upload</el-button>
 				</span>
 			</el-dialog>
+			<!-- REMOTE FILE UPLOAD DIALOGUE end -->
+
+			<!-- VIDEO PLAYER DIALOGUE start -->
 			<el-dialog v-cloak :visible.sync="displayVideoPlayer">
 				<div style="width:100%;margin:0 auto;text-align:center">
 					<video width="400" controls ref="videoPlayer">
@@ -332,6 +287,9 @@
 					<el-button type="primary" @click="closeVideoPlayer()">Close</el-button>
 				</span>
 			</el-dialog>
+			<!-- VIDEO PLAYER DIALOGUE end -->
+
+			<!-- AUDIO PLAYER DIALOGUE start-->
 			<div v-cloak v-if="displayAudioPlayer && !firstTimeOpened" style="
 				position:fixed;
 				bottom:0;
@@ -347,6 +305,7 @@
 				</audio>
 				<span style="position:absolute;color:black;padding-left:30px;top:18px;font-weight:bold;cursor:pointer" title="close" @click="closeAudioPlayer()">X</span>
 			</div>
+			<!-- AUDIO PLAYER DIALOGUE end-->
 		</div>
 		<script>
 			ELEMENT.locale(ELEMENT.lang.en);

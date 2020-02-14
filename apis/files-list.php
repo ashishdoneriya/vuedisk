@@ -47,7 +47,13 @@ if ($handle = opendir($path)) {
 			if ($size == ' B') {
 				$size = '0 B';
 			}
-			array_push($list, array('name' => $entry , 'isDir' => false, 'size' => $size, 'mime' => $mime));
+			if (strpos($mime, 'image') !== false) {
+				$dimension = getimagesize($filepath);
+				array_push($list, array('name' => $entry , 'isDir' => false, 'size' => $size, 'mime' => $mime, 'dimension' => $dimension));
+			} else {
+				array_push($list, array('name' => $entry , 'isDir' => false, 'size' => $size, 'mime' => $mime));
+			}
+
 		}
 	}
 	closedir($handle);
