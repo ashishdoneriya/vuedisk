@@ -1,0 +1,537 @@
+<template>
+	<!-- File UPLOAD DIALOGUE start -->
+	<el-dialog v-cloak
+		title="File(s) Upload"
+		:visible.sync="localFileUploadDialog"
+		@close="refresh()">
+
+		<div class="clearfix"
+			style="display:flex;align-items:center;margin-bottom:10px">
+			<div class="upload-btn-wrapper"
+				v-if="isUploadDirSupported"
+				style="margin-right:20px">
+				<el-button type="primary"
+					@click="openFolderUploadDialog()">Add Folder</el-button>
+				<input type="file"
+					id="file"
+					ref="folderUploadInputButton"
+					webkitdirectory
+					multiple
+					@change="addFilesToUpload()" />
+			</div>
+			<div class="upload-btn-wrapper">
+				<el-button type="primary"
+					@click="openFileUploadDialog()">Add Files</el-button>
+				<input type="file"
+					id="file"
+					ref="fileUploadInputButton"
+					multiple
+					@change="addFilesToUpload()" />
+			</div>
+			<div style="flex: 1 1"></div>
+			<div :span="24"
+				v-if="filesToUpload && filesToUpload.length > 0"><b><span style="margin-right:5px">{{filesUploaded}} of {{filesToUpload.length}}</span><span>Files Uploaded</span></b></div>
+		</div>
+
+		<div v-if="!isMobile"
+			style="max-height:250px;overflow-y:auto;overflow-x:hidden">
+			<div class="row-bg"
+				v-for="fileInfo in filesToUpload"
+				:key="fileInfo.file"
+				style="margin-bottom:5px">
+				<div :span="24"
+					class="clearfix flex">
+					<div style="font-weight: 500">{{fileInfo.file.name}}</div>
+					<div style="flex: 1 1"></div>
+					<div>{{ fileInfo.uploadInfoText }}</div>
+					<div v-if="!fileInfo.isUploaded()"
+						style="margin-left:10px">
+						<el-button v-if="fileInfo.isPaused"
+							@click="resumeFileUpload(fileInfo)"
+							type="text"
+							title="Resume"><img src="icons/play_arrow-24px.svg"
+								alt="Resume"></el-button>
+						<el-button v-if="!fileInfo.isPaused"
+							@click="pauseFileUpload(fileInfo)"
+							type="text"
+							title="Pause"><img src="icons/pause-24px.svg"
+								alt="Pause"></el-button>
+					</div>
+					<div v-if="!fileInfo.isUploaded()"
+						style="margin-left: 10px;">
+						<el-button @click="cancelFileUpload(fileInfo)"
+							type="text"
+							title="Cancel"><img src="icons/close-24px.svg"
+								alt="Cancel"></el-button>
+					</div>
+				</div>
+				<div :span="24">
+					<el-progress v-if="fileInfo.isUploaded()"
+						:percentage="100"
+						status="success"></el-progress>
+					<el-progress v-else
+						:percentage="fileInfo.progressComputed"></el-progress>
+				</div>
+			</div>
+		</div>
+
+		<div v-if="isMobile"
+			style="max-height:180px;overflow-y:auto;overflow-x:hidden">
+			<div class="row-bg"
+				v-for="fileInfo in filesToUpload"
+				:key="fileInfo.file"
+				style="margin-bottom:10px">
+				<div :span="24"
+					style="font-weight: 500">{{fileInfo.file.name}}</div>
+				<div :span="24"
+					class="flex">
+					<div>{{ fileInfo.uploadInfoText }}</div>
+					<div style="flex: 1 1"></div>
+					<div v-if="!fileInfo.isUploaded()"
+						style="margin-left:10px">
+						<el-button v-if="fileInfo.isPaused"
+							@click="resumeFileUpload(fileInfo)"
+							type="text"
+							title="Resume"><img src="icons/play_arrow-24px.svg"
+								alt="Resume"></el-button>
+						<el-button v-else
+							@click="pauseFileUpload(fileInfo)"
+							type="text"
+							title="Pause"><img src="icons/pause-24px.svg"
+								alt="Pause"></el-button>
+					</div>
+					<div v-if="!fileInfo.isUploaded()"
+						style="margin-left: 10px;">
+						<el-button @click="cancelFileUpload(fileInfo)"
+							type="text"
+							title="Cancel Uploading"><img src="icons/close-24px.svg"
+								alt="Cancel"></el-button>
+					</div>
+				</div>
+				<div :span="24">
+					<el-progress v-if="fileInfo.isUploaded()"
+						:percentage="100"
+						status="success"></el-progress>
+					<el-progress v-else
+						:percentage="fileInfo.progressComputed"></el-progress>
+				</div>
+			</div>
+		</div>
+
+		<div v-if="isMobile"
+			style="align-items:center;margin-bottom:10px;margin-top:15px;">
+			<div :span="24"
+				v-if="filesToUpload && filesToUpload.length > 0 && filesUploaded < filesToUpload.length && filesToUploadInfo.timeRemaining"><span style="margin-right:5px;font-weight:bold">Time Remaining : {{filesToUploadInfo.timeRemaining}} @ {{formatSize(filesToUploadInfo.speed)}}/s</span></div>
+			<div :span="24"
+				v-if="filesToUpload && filesToUpload.length > 1"><span style="margin-right:5px;font-weight:bold">Uploaded : {{formatSize(filesToUploadInfo.uploaded)}} / {{formatSize(filesToUploadInfo.totalSize)}}</span></div>
+		</div>
+
+		<div class="clearfix"
+			v-if="!isMobile"
+			style="display:flex;align-items:center;margin-bottom:10px;margin-top:15px;">
+			<div v-if="filesToUpload && filesToUpload.length > 0 && filesUploaded < filesToUpload.length && filesToUploadInfo.timeRemaining"><span style="margin-right:5px;font-weight:bold">Time Remaining : {{filesToUploadInfo.timeRemaining}} @ {{formatSize(filesToUploadInfo.speed)}}/s</span></div>
+			<div style="flex: 1 1"></div>
+			<div :span="24"
+				v-if="filesToUpload && filesToUpload.length > 1"><span style="margin-right:5px;font-weight:bold">{{formatSize(filesToUploadInfo.uploaded)}} / {{formatSize(filesToUploadInfo.totalSize)}}</span></div>
+		</div>
+		<span v-if="!isMobile"
+			slot="footer"
+			class="dialog-footer">
+			<el-button type="primary"
+				@click="closeLocalUploadDialog()">Close</el-button>
+		</span>
+	</el-dialog>
+	<!-- File UPLOAD DIALOGUE end -->
+</template>
+
+<script>
+	module.exports = {
+		data() {
+			return {
+				localFileUploadDialog: false,
+				uploadFilesList: [],
+				speedArray: [],
+				maxThreads: 4,
+				threadsRunning: 0,
+				filesToUpload: [],
+				isUploadDirSupported: false,
+				filesToUploadInfo: {
+					'totalSize': 0,
+					'uploaded': 0,
+					'timeRemaining': 0,
+					'speed': 0
+				}
+			}
+		},
+		watch: {
+			threadsRunning() {
+				this.addThread();
+			}
+		},
+		computed: {
+
+			filesUploaded() {
+				let count = 0;
+				for (let fileToUpload of this.filesToUpload) {
+					if (fileToUpload.isUploaded()) {
+						count++;
+					}
+				}
+				return count;
+			},
+			isMobile() {
+				if (screen.width <= 720) {
+					return true;
+				} else {
+					return false;
+				}
+			},
+		},
+		created() {
+			this.isUploadDirSupported = !this.isMobile && this.isInputDirSupported();
+			this.addNetworkCheckerListeners();
+		},
+
+		props: ['bus', 'currentDir'],
+
+		mounted() {
+			this.bus.$on('openLocalUploadDialog', this.openLocalUploadDialog);
+		},
+
+		methods: {
+			refresh() {
+				this.$emit('refresh');
+			},
+			openFileUploadDialog() {
+				this.$refs.fileUploadInputButton.click();
+			},
+
+			openFolderUploadDialog() {
+				this.$refs.folderUploadInputButton.click();
+			},
+
+			isInputDirSupported() {
+				var tmpInput = document.createElement('input');
+				if ('webkitdirectory' in tmpInput ||
+					'mozdirectory' in tmpInput ||
+					'odirectory' in tmpInput ||
+					'msdirectory' in tmpInput ||
+					'directory' in tmpInput) return true;
+				return false;
+			},
+
+			openLocalUploadDialog() {
+				if (this.filesToUpload && this.filesUploaded == this.filesToUpload.length) {
+					this.clear();
+				}
+				this.localFileUploadDialog = true;
+			},
+
+			pauseFileUpload(fileInfo) {
+				let threadsPaused = fileInfo.pause();
+				if (threadsPaused > this.threadsRunning) {
+					this.threadsRunning = 0;
+				} else {
+					this.threadsRunning = this.threadsRunning - threadsPaused;
+				}
+			},
+
+			cancelFileUpload(fileInfo) {
+				let threadsCanceled = fileInfo.cancel();
+				if (threadsCanceled > this.threadsRunning) {
+					this.threadsRunning = 0;
+				} else {
+					this.threadsRunning = this.threadsRunning - threadsCanceled;
+				}
+				let i = this.filesToUpload.length;
+				while (i--) {
+					let obj = this.filesToUpload[i];
+					if (obj.file.name == fileInfo.file.name && obj.parentDir == fileInfo.parentDir) {
+						this.filesToUpload.splice(i, 1);
+						break;
+					}
+				}
+				this.filesToUploadInfo.totalSize -= fileInfo.file.size;
+				this.filesToUploadInfo.uploaded -= fileInfo.bytesUploaded;
+				this.filesToUploadInfo.speed = 0;
+				if (this.filesToUploadInfo.totalSize == 0) {
+					this.speedArray = [];
+				}
+			},
+
+			resumeFileUpload(fileInfo) {
+				fileInfo.resume();
+				this.addThread();
+			},
+
+			clear() {
+				this.filesToUploadInfo.totalSize = 0;
+				this.filesToUploadInfo.uploaded = 0;
+				this.filesToUploadInfo.speed = 0;
+				this.filesToUploadInfo.timeRemaining = '';
+				this.filesToUpload = [];
+				this.speedArray = [];
+			},
+
+			createFileInfoObject(file) {
+				let size = file.size;
+				let bytesPerChunk = 524288;
+				let totalNoOfChunks = Math.max(Math.ceil(size / bytesPerChunk), 1);
+				/*if (totalNoOfChunks > 1) {
+					totalNoOfChunks--;
+					bytesPerChunk = Math.max(Math.ceil(size / totalNoOfChunks), 1);
+				} */
+				let fileUniqueId = file.name + (new Date()).getTime();
+				let parentDir = this.currentDir;
+				if (file.webkitRelativePath) {
+					let webkitpath = file.webkitRelativePath;
+					webkitpath = webkitpath.substring(0, webkitpath.lastIndexOf('/'));
+					if (!parentDir.endsWith('/')) {
+						parentDir = parentDir + '/' + webkitpath;
+					} else {
+						parentDir = parentDir + webkitpath;
+					}
+				}
+				file['parentDir'] = parentDir;
+				return {
+					parentDir: parentDir,
+					file: file,
+					bytesPerChunk: bytesPerChunk,
+					totalNoOfChunks: totalNoOfChunks,
+					chunksUploaded: 0,
+					chunksUploading: 0,
+					bytesUploaded: 0,
+					isPaused: false,
+					hasNetworkError: false,
+					threads: {},
+					progressComputed: 0,
+					fileUniqueId: fileUniqueId,
+					uploadInfoText: '- / ' + formatSize(file.size, file.size),
+					canCreatePromise() {
+						if ((this.chunksUploaded + this.chunksUploading) != this.totalNoOfChunks && !this.isPaused) {
+							return true;
+						}
+						return false;
+					},
+					isUploaded() {
+						return this.chunksUploaded == this.totalNoOfChunks;
+					},
+					createPromise() {
+						let start = (this.chunksUploaded + this.chunksUploading) * this.bytesPerChunk;
+						let end = start + this.bytesPerChunk;
+						let blob = this.file.slice(start, end);
+						let currentChunkSize = (this.file.size < end ? this.file.size : end) - start;
+						let chunkToUpload = this.chunksUploaded + this.chunksUploading + 1;
+						return new Promise((resolve, reject) => {
+							let fd = new FormData();
+							let xhr = new XMLHttpRequest();
+							fd.append('upload', blob, this.file.name);
+							fd.append('fileUniqueId', this.fileUniqueId);
+							fd.append('num', chunkToUpload);
+							fd.append('num_chunks', this.totalNoOfChunks);
+							fd.append('parentDir', this.parentDir);
+							xhr.open('POST', '/apis/upload.php', true);
+							this.threads[chunkToUpload] = {};
+							this.threads[chunkToUpload]['progress'] = 0.0;
+							this.threads[chunkToUpload]['stop'] = () => {
+								xhr.abort();
+							};
+							this.threads[chunkToUpload]['currentChunkSize'] = currentChunkSize;
+							xhr.upload.addEventListener('progress', (evt) => {
+								if (evt.lengthComputable) {
+									this.threads[chunkToUpload]['progress'] = evt.loaded / evt.total;
+									this.progressComputed = this.progress();
+									this.uploadInfoText = formatSize(this.bytesUploadedTillNow(), this.file.size) + ' / ' + formatSize(this.file.size, this.file.size);
+								}
+							}, false);
+							this.chunksUploading++;
+							let date = new Date();
+							xhr.onload = () => resolve({
+								'fileInfo': this,
+								'index': chunkToUpload,
+								'currentChunkSize': currentChunkSize,
+								'time': date.getTime()
+							});
+
+							xhr.onerror = () => {
+								this.pause();
+								reject(xhr.statusText);
+							}
+							xhr.send(fd);
+						});
+					},
+					pause() {
+						this.isPaused = true;
+						let threadsStopped = 0;
+						let minKey = Number.MAX_VALUE;
+						for (let sKey in this.threads) {
+							this.threads[sKey]['stop']();
+							threadsStopped++;
+							delete this.threads[sKey];
+							let key = parseInt(sKey);
+							if (minKey > key) {
+								minKey = key;
+							}
+
+						}
+						this.chunksUploaded = minKey - 1;
+						this.chunksUploading = 0;
+						this.bytesUploaded = this.chunksUploaded * this.bytesPerChunk;
+						this.progressComputed = this.progress();
+						this.uploadInfoText = formatSize(this.bytesUploadedTillNow(), this.file.size) + ' / ' + formatSize(this.file.size, this.file.size);
+						return threadsStopped;
+					},
+					cancel() {
+						this.isPaused = true;
+						let threadsStopped = 0;
+						for (var key in this.threads) {
+							this.threads[key]['stop']();
+							threadsStopped++;
+						}
+						this.threads = {};
+						this.chunksUploading = 0;
+						//	this.progressComputed = this.progress();
+						let fileUniqueId = this.fileUniqueId;
+						axios.post('/apis/cancel-upload.php', {
+							'fileUniqueId': fileUniqueId
+						})
+							.then((response) => {
+
+							}).catch((e) => {
+								console.error(e);
+							});
+						return threadsStopped;
+					},
+					resume() {
+						this.isPaused = false;
+					},
+					progress() {
+						let chunksUploaded = this.chunksUploaded;
+						for (var key in this.threads) {
+							chunksUploaded += this.threads[key]['progress'];
+						}
+						return parseInt(chunksUploaded * 100 / this.totalNoOfChunks);
+					},
+					bytesUploadedTillNow() {
+						let bytesUploaded = this.bytesUploaded;
+						for (var key in this.threads) {
+							bytesUploaded += this.threads[key]['progress'] * this.threads[key]['currentChunkSize'];
+						}
+						return parseInt(bytesUploaded);
+					}
+				};
+			},
+
+			submitFiles() {
+				this.addThread();
+			},
+
+
+			addNetworkCheckerListeners() {
+				window.addEventListener('offline', () => {
+					if (this.filesToUpload.length <= 0) {
+						return;
+					}
+					let anyUploadingStopped = false;
+					for (let fileInfo of this.filesToUpload) {
+						if (fileInfo.isUploaded() || fileInfo.isPaused) {
+							continue;
+						}
+						anyUploadingStopped = true;
+						fileInfo.pause();
+						fileInfo.hasNetworkError = true;
+					}
+					this.$message({
+						message: 'Network disconnected' + (anyUploadingStopped ? '. Pausing file(s) uploading.' : ''),
+						type: 'error',
+						center: true
+					});
+					this.threadsRunning = 0;
+				});
+				window.addEventListener('online', () => {
+					if (this.filesToUpload.length <= 0) {
+						return;
+					}
+					let anyUploadingRestarted = false;
+					for (let fileInfo of this.filesToUpload) {
+						if (fileInfo.isUploaded() || !fileInfo.hasNetworkError) {
+							continue;
+						}
+						anyUploadingRestarted = true;
+						fileInfo.resume();
+						fileInfo.hasNetworkError = false;
+					}
+					this.$message({
+						message: 'Network connected.' + (anyUploadingRestarted ? ', Resuming file(s) uploading.' : ''),
+						type: 'info',
+						center: true
+					});
+					this.addThread();
+				});
+			},
+
+			closeLocalUploadDialog() {
+				this.localFileUploadDialog = false;
+				this.refresh();
+				this.uploadFilesList.splice(0, this.uploadFilesList.length);
+			},
+
+			addThread() {
+				if (this.threadsRunning < this.maxThreads && this.filesToUpload.length > 0) {
+					for (let fileToUpload of this.filesToUpload) {
+						if (fileToUpload.canCreatePromise()) {
+							let filesToUploadInfo = this.filesToUploadInfo;
+							let speedArray = this.speedArray;
+							fileToUpload.createPromise().then(info => {
+								let obj = info.fileInfo;
+								obj.chunksUploaded++;
+								obj.chunksUploading--;
+								obj.bytesUploaded += info.currentChunkSize;
+								this.filesToUploadInfo.uploaded += info.currentChunkSize;
+
+								// calculating speed speedArray
+								this.speedArray.push((info.currentChunkSize * 1000) / ((new Date()).getTime() - info.time))
+								if (this.speedArray.length > 8) {
+									this.speedArray.splice(0, 1);
+								}
+								let sum = this.speedArray.reduce(function (a, b) {
+									return a + b;
+								});
+								let avg = sum / this.speedArray.length;
+								let speed = this.threadsRunning * avg;
+								this.filesToUploadInfo.speed = this.threadsRunning * avg;
+								this.filesToUploadInfo.timeRemaining = parseTime((this.filesToUploadInfo.totalSize - this.filesToUploadInfo.uploaded) / this.filesToUploadInfo.speed);
+								this.threadsRunning--;
+								delete obj.threads[info.index];
+
+							}).catch((error) => {
+								console.log(error);
+								this.threadsRunning--;
+							});
+							this.threadsRunning++;
+							return;
+						}
+					}
+				}
+			},
+
+			addFilesToUpload() {
+				this.showUploadProgress = false;
+				for (let file of this.$refs.fileUploadInputButton.files) {
+					this.filesToUploadInfo.totalSize += file.size;
+					this.filesToUpload.push(this.createFileInfoObject(file));
+				}
+				if (this.$refs.folderUploadInputButton) {
+					this.$refs.folderUploadInputButton.value = '';
+				}
+				if (this.$refs.fileUploadInputButton) {
+					this.$refs.fileUploadInputButton.value = '';
+				}
+				this.addThread();
+			},
+			formatSize(num, MAX) {
+				return formatSize(num, MAX);
+			}
+		}
+	}
+</script>
