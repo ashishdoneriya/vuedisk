@@ -17,7 +17,7 @@
 					ref="folderUploadInputButton"
 					webkitdirectory
 					multiple
-					@change="addFilesToUpload()" />
+					@change="addFolderToUpload()" />
 			</div>
 			<div class="upload-btn-wrapper">
 				<el-button type="primary"
@@ -513,6 +513,14 @@
 						}
 					}
 				}
+			},
+			
+			addFolderToUpload() {
+				this.showUploadProgress = false;
+				for (let file of this.$refs.folderUploadInputButton.files) {
+					this.filesToUpload.push(this.createFileInfoObject(file));
+				}
+				this.addThread();
 			},
 
 			addFilesToUpload() {
