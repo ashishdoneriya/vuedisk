@@ -3,8 +3,6 @@ File Manager using vuejs, element ui as frontend and php as backend.
 
 Inspired from Filegator, Aws S3 explorer and Google Drive UI.
 
-[Demo](https://vuedisk.csetutorials.com/)
-
 ## Features
 * Generate thumbnails dynamically
 * Fast & smooth navigation
