@@ -12,7 +12,7 @@ Inspired from Filegator, Aws S3 explorer and Google Drive UI.
 * Remote file upload
 
 
-[Download script](https://github.com/ashishdoneriya/php-file-manager/archive/v0.1.2.zip)
+[Download script](https://github.com/ashishdoneriya/vuedisk/releases/download/v0.1.3/vuedisk-v0.1.3.zip)
 
 ## How to setup?
 1. Change or add username, password and home directory in the file apis/base-dir.php and you are good to go. It doesn't use any type of database.
