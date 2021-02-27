@@ -31,6 +31,4 @@ Inspired from Filegator, Aws S3 explorer and Google Drive UI.
 
 This is because lets say I have an Image whose size is 10 MB. So at first it generates image of height 320px (~ 150 KB). When you click on that image, it generates image of height 720px (~ 2MB). And when you click download button, it downloads original image (10 MB).
 
-To counter this slowness, I created a golang program (which is very fast at converting images) which was to be called by the thumbnail.php but php restricted to call exec() method. So if you php server allows calling exec() method then you can try it (rename apis/thumbnail-next.php to apis/thumbnail.php)
-
 Also it would be better if you use SSD storage.
