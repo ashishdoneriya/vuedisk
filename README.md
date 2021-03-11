@@ -3,6 +3,8 @@ File Manager using vuejs, element ui as frontend and php as backend.
 
 Inspired from Filegator, Aws S3 explorer and Google Drive UI.
 
+It is faster than OwnCloud & Next Cloud and is very simple to setup.
+
 ## Features
 * Generate thumbnails dynamically
 * Fast & smooth navigation
